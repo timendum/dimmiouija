@@ -37,13 +37,13 @@ class OuijaPost(object):
         """Flair the post based on answer_text"""
         if not self.answer_text:
             if not self._post.link_flair_text:
-                #self._post.mod.flair(UNANSWERED['text'], UNANSWERED['class'])
+                self._post.mod.flair(UNANSWERED['text'], UNANSWERED['class'])
                 LOGGER.debug("Flair - UNANSWERED - https://www.reddit.com%s", self._post.permalink)
         else:
             text = ANSWERED['text'] + self.answer_text
             if len(text) > 64:
                 text = text[0:61] + '...'
-            #self._post.mod.flair(text, ANSWERED['class'])
+            self._post.mod.flair(text, ANSWERED['class'])
             LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self):
@@ -72,11 +72,11 @@ class OuijaPost(object):
         """
         if comment.author.name == self.author:
             LOGGER.info("Deleting - OP = author - %s", self.permalink(comment))
-            #comment.mod.delete()
+            comment.mod.remove()
             return True
         if comment.author.name == parent.author.name:
             LOGGER.info("Deleting - parent = author - %s", self.permalink(comment))
-            #comment.mod.delete()
+            comment.mod.remove()
             return True
         return False
 
@@ -113,7 +113,7 @@ class OuijaPost(object):
                     found = True
             else:
                 LOGGER.info("Deleting - length <> 1 - %s", self.permalink(comment))
-                #comment.mod.delete()
+                comment.mod.remove()
         return found
 
 

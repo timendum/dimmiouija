@@ -99,24 +99,24 @@ class OuijaPost(object):
             # skip comments by mods
             if comment.stickied or comment.distinguished or comment.removed:
                 continue
-            # check body
-            body = comment.body.strip()
             if self.moderation(comment, parent):
                 continue
+            # check body
+            body = comment.body.strip()
             if GOODBYE.match(body):
-                if self.accept_answer(comment):
-                    found = True
+                found = found or self.accept_answer(comment)
             elif len(body) == 1:
                 if existing.get(body):
                     if comment.created > existing[body].created and not comment.replies:
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(comment))
                         comment.mod.remove()
-                    elif not existing[body].replies:
+                        continue
+                    if not existing[body].replies:
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(existing[body]))
                         existing[body].mod.remove()
                         existing[body] = comment
-                else:
-                    existing[body] = comment
+                        continue
+                existing[body] = comment
                 if self.find_answers(comment):
                     self.answer_text = body + self.answer_text
                     found = True

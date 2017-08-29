@@ -88,6 +88,7 @@ class OuijaPost(object):
     def find_answers(self, parent):
         """Given a comment return a list of open and closed replies"""
         found = False
+        existing = {}
         if isinstance(parent, CommentForest):
             parent.replace_more(limit=None)
         try: 
@@ -110,6 +111,16 @@ class OuijaPost(object):
                 if self.accept_answer(comment):
                     found = True
             elif len(body) == 1:
+                if existing.get(body):
+                    if comment.created > existing[body].created and not comment.replies:
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(comment))
+                        comment.mod.remove()
+                    elif not existing[body].replies:
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(existing[body]))
+                        existing[body].mod.remove()
+                        existing[body] = comment
+                else:
+                    existing[body] = comment
                 if self.find_answers(comment):
                     self.answer_text = body + self.answer_text
                     found = True

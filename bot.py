@@ -91,17 +91,13 @@ class OuijaPost(object):
         existing = {}
         if isinstance(parent, CommentForest):
             parent.replace_more(limit=None)
-        try: 
+        try:
             comments = parent.replies
-        except:
+        except AttributeError:
             comments = parent.comments
         for comment in comments:
             # skip comments by mods
-            if comment.stickied:
-                continue
-            if comment.distinguished:
-                continue
-            if comment.removed:
+            if comment.stickied or comment.distinguished or comment.removed:
                 continue
             # check body
             body = comment.body.strip()

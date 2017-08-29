@@ -151,9 +151,11 @@ class Ouija(object):
                 post.flair()
 
     def check_report(self):
+        """Check reports of incorrect flairs"""
         pass
 
     def main(self):
+        """Perform all bot actions"""
         self.check_hot()
         self.check_report()
 

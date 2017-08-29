@@ -100,6 +100,8 @@ class OuijaPost(object):
                 continue
             if comment.distinguished:
                 continue
+            if comment.removed:
+                continue
             # check body
             body = comment.body.strip()
             if self.moderation(comment, parent):

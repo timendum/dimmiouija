@@ -91,14 +91,18 @@ class OuijaPost(object):
         existing = {}
         if isinstance(parent, CommentForest):
             parent.replace_more(limit=None)
+        # try replies for parent=comment
         try:
             comments = parent.replies
         except AttributeError:
+            # try comments for parent=submission
             comments = parent.comments
+        # loop for every child comment
         for comment in comments:
-            # skip comments by mods
+            # skip comments by mods or removed comments
             if comment.stickied or comment.distinguished or comment.removed:
                 continue
+            # if modeation is applied (comment removed), skip
             if self.moderation(comment, parent):
                 continue
             # check body
@@ -107,20 +111,26 @@ class OuijaPost(object):
                 found = found or self.accept_answer(comment)
             elif len(body) == 1:
                 if existing.get(body):
+                    # the letter is already insered
                     if comment.created > existing[body].created and not comment.replies:
+                        # the new comment is newer and does not have replies: delete it
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(comment))
                         comment.mod.remove()
                         continue
                     if not existing[body].replies:
+                        # the previous comment has not replies: delete it
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(existing[body]))
                         existing[body].mod.remove()
                         existing[body] = comment
                         continue
+                # the letter is not already insered, save it
                 existing[body] = comment
                 if self.find_answers(comment):
+                    # compose the answer
                     self.answer_text = body + self.answer_text
                     found = True
             else:
+                # comment is by user and longer than 1 char (unicode ok), delete it
                 LOGGER.info("Deleting - length <> 1 - %s", self.permalink(comment))
                 comment.mod.remove()
         return found

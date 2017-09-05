@@ -2,6 +2,7 @@
 # pylint: disable=C0103
 import logging
 import re
+import time
 from praw import Reddit
 from praw.models.comment_forest import CommentForest
 
@@ -15,6 +16,8 @@ GOODBYE = re.compile(r'^(Goodbye|Arrivederci)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 
+TIME_LIMIT = 24 * 60 * 60 * 1000
+YESTERDAY = time.time() - TIME_LIMIT
 
 class OuijaPost(object):
     """A post in ouija"""
@@ -32,6 +35,10 @@ class OuijaPost(object):
         if not self._post.link_flair_text:
             return True
         return self._post.link_flair_text == UNANSWERED['text']
+
+    def is_fresh(self):
+        """Check if the submission is younger then YESTERDAY"""
+        return self._post.created_utc > YESTERDAY
 
     def flair(self):
         """Flair the post based on answer_text"""
@@ -153,21 +160,16 @@ class Ouija(object):
             if submission.stickied:
                 continue
             post = OuijaPost(submission)
-            if post.is_unanswered():
+            if post.is_fresh() or post.is_unanswered():
                 answer = post.process()
                 if answer:
                     if post.answer_score <= 1:
                         post.answer_text = None
                 post.flair()
 
-    def check_report(self):
-        """Check reports of incorrect flairs"""
-        pass
-
     def main(self):
         """Perform all bot actions"""
         self.check_hot()
-        self.check_report()
 
 if __name__ == "__main__":
     o = Ouija('DimmiOuija')

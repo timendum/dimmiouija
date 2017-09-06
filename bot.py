@@ -10,7 +10,7 @@ AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
 
 LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.DEBUG)
+LOGGER.setLevel(logging.INFO)
 
 GOODBYE = re.compile(r'^(Goodbye|Arrivederci)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}

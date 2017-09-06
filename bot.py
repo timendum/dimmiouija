@@ -12,7 +12,7 @@ LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.StreamHandler())
 LOGGER.setLevel(logging.INFO)
 
-GOODBYE = re.compile(r'^(Goodbye|Arrivederci)', re.IGNORECASE)
+GOODBYE = re.compile(r'^(Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 

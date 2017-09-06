@@ -29,6 +29,9 @@ class OuijaPost(object):
         self.question = post.title
         self.answer_text = None
         self.answer_score = float('-inf')
+        self.flair = None
+        if post.link_flair_text and post.link_flair_text != UNANSWERED['text']:
+            self.flair = post.link_flair_text
 
     def is_unanswered(self):
         """Check if the submission is Unanswered"""
@@ -40,7 +43,7 @@ class OuijaPost(object):
         """Check if the submission is younger then YESTERDAY"""
         return self._post.created_utc > YESTERDAY
 
-    def flair(self):
+    def change_flair(self):
         """Flair the post based on answer_text"""
         if not self.answer_text:
             if not self._post.link_flair_text:
@@ -50,8 +53,9 @@ class OuijaPost(object):
             text = ANSWERED['text'] + self.answer_text
             if len(text) > 64:
                 text = text[0:61] + '...'
-            self._post.mod.flair(text, ANSWERED['class'])
-            LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
+            if text != self.flair:
+                self._post.mod.flair(text, ANSWERED['class'])
+                LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self):
         """Check for answers in the comments and delete wrong comments"""
@@ -165,7 +169,7 @@ class Ouija(object):
                 if answer:
                     if post.answer_score <= 1:
                         post.answer_text = None
-                post.flair()
+                post.change_flair()
 
     def main(self):
         """Perform all bot actions"""

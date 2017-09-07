@@ -20,7 +20,7 @@ class Slack():
     """Transmit messages to slack channel"""
 
     def __init__(self):
-        dummy_reddit = Reddit()
+        dummy_reddit = Reddit(check_for_updates=False)
         config = dummy_reddit.config.CONFIG['SLACK']
         self.channel = config['channel']
         del dummy_reddit

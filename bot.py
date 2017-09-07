@@ -5,12 +5,9 @@ import re
 import time
 from praw import Reddit
 from praw.models.comment_forest import CommentForest
+from slacker import Slacker
 
 AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
-
-LOGGER = logging.getLogger(__file__)
-LOGGER.addHandler(logging.StreamHandler())
-LOGGER.setLevel(logging.INFO)
 
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
@@ -18,6 +15,51 @@ ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
+
+class Slack():
+    """Transmit messages to slack channel"""
+
+    def __init__(self):
+        dummy_reddit = Reddit()
+        config = dummy_reddit.config.CONFIG['SLACK']
+        self.channel = config['channel']
+        del dummy_reddit
+        self.slack = Slacker(config['token'])
+        self._logger = logging.getLogger(__file__)
+        self._logger.addHandler(logging.StreamHandler())
+        self._logger.setLevel(logging.INFO)
+        self._formatter = logging.Formatter()
+
+    def _format(self, level, msg, *args, **kwargs):
+        """Fromat message with default logging formatter"""
+        record = logging.LogRecord(None, level, None, None, msg, args, kwargs)
+        return self._formatter.format(record)
+
+    def setLevel(self, level):
+        """
+        Set the logging level of this logger.  level must be an int or a str.
+        """
+        self._logger.setLevel(level)
+
+    def debug(self, msg, *args, **kwargs):
+        """
+        Log 'msg % args' with severity 'DEBUG'.
+        """
+        if self._logger.isEnabledFor(logging.DEBUG):
+            self._logger.debug(msg, *args, **kwargs)
+            chat_message = self._format(logging.DEBUG, msg, *args, **kwargs)
+            self.slack.chat.post_message(self.channel, chat_message)
+
+    def info(self, msg, *args, **kwargs):
+        """
+        Log 'msg % args' with severity 'INFO'.
+        """
+        if self._logger.isEnabledFor(logging.INFO):
+            self._logger.info(msg, *args, **kwargs)
+            chat_message = self._format(logging.INFO, msg, *args, **kwargs)
+            self.slack.chat.post_message(self.channel, chat_message)
+
+LOGGER = Slack()
 
 class OuijaPost(object):
     """A post in ouija"""

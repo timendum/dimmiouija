@@ -41,7 +41,7 @@ class Summarizer():
             'url': submission.url,
             'answer': submission.link_flair_text.replace(ANSWERED_FLAIR, '')
         }
-        self.text += '### [{title}]({url})\n\n{answer}%s\n\n'.format(**params)
+        self.text += '#### [{title}]({url})\n\n| {answer}\n\n'.format(**params)
 
     def wiki(self) -> None:
         """Transfer parsed pages to subreddit wiki"""

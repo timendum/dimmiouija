@@ -16,6 +16,7 @@ ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
+
 class Slack():
     """Transmit messages to slack channel"""
 
@@ -59,7 +60,9 @@ class Slack():
             chat_message = self._format(logging.INFO, msg, *args, **kwargs)
             self.slack.chat.post_message(self.channel, chat_message)
 
+
 LOGGER = Slack()
+
 
 class OuijaPost(object):
     """A post in ouija"""
@@ -216,6 +219,7 @@ class Ouija(object):
     def main(self):
         """Perform all bot actions"""
         self.check_hot()
+
 
 if __name__ == "__main__":
     o = Ouija('DimmiOuija')

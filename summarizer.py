@@ -12,6 +12,7 @@ DATE_FORMAT = '%d/%m/%Y'
 
 ANSWERED_FLAIR = bot.ANSWERED['text']
 
+
 class Summarizer():
     """A post in ouija"""
 
@@ -66,6 +67,7 @@ class Summarizer():
         """Perform all bot actions"""
         self.check_submissions()
         self.wiki()
+
 
 if __name__ == "__main__":
     s = Summarizer('DimmiOuija')

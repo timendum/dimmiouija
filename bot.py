@@ -220,6 +220,15 @@ class Ouija(object):
         """Perform all bot actions"""
         self.check_hot()
 
+    def open(self):
+        """Open the subreddit to new submission"""
+        self.subreddit.mod.update(subreddit_type='public')
+        LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s" % self.subreddit.display_name)
+
+    def close(self):
+        """Close the subreddit to new submission"""
+        self.subreddit.update(subreddit_type='restricted')
+        LOGGER.info("Subreddit chiuso")
 
 if __name__ == "__main__":
     o = Ouija('DimmiOuija')

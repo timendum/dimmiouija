@@ -1,5 +1,6 @@
 """Produce a summery for AskOuija thread"""
 # pylint: disable=C0103
+import argparse
 import logging
 import re
 import time
@@ -216,10 +217,6 @@ class Ouija(object):
                         post.answer_text = None
                 post.change_flair()
 
-    def main(self):
-        """Perform all bot actions"""
-        self.check_hot()
-
     def open(self):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type='public')
@@ -230,6 +227,25 @@ class Ouija(object):
         self.subreddit.update(subreddit_type='restricted')
         LOGGER.info("Subreddit chiuso")
 
+
+def main():
+    """Perform a bot action"""
+    parser = argparse.ArgumentParser(description='Activate mod bot on /r/DimmiOuija ')
+    parser.add_argument(
+        'action',
+        choices=['hot', 'open', 'close'],
+        default='hot',
+        help='The action to perform (default: %(default)s)')
+    args = parser.parse_args()
+
+    bot = Ouija('DimmiOuija')
+    if args.action == 'hot':
+        bot.check_hot()
+    elif args.action == 'open':
+        bot.open()
+    elif args.action == 'close':
+        bot.close()
+
+
 if __name__ == "__main__":
-    o = Ouija('DimmiOuija')
-    o.main()
+    main()

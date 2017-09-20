@@ -28,7 +28,7 @@ class Slack():
         del dummy_reddit
         self.slack = Slacker(config['token'])
         self._logger = logging.getLogger(__file__)
-        self._logger.addHandler(logging.StreamHandler())
+        self._logger.addHandler(logging.NullHandler())
         self._logger.setLevel(logging.INFO)
         self._formatter = logging.Formatter()
 

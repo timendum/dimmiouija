@@ -128,11 +128,11 @@ class OuijaPost(object):
         Return True if deleted, False otherwise.
         """
         if comment.author.name == self.author:
-            LOGGER.info("Deleting - OP = author - %s", self.permalink(comment))
+            LOGGER.info("Deleting - OP = author - %s", self.permalink(parent))
             comment.mod.remove()
             return True
         if comment.author.name == parent.author.name:
-            LOGGER.info("Deleting - parent = author - %s", self.permalink(comment))
+            LOGGER.info("Deleting - parent = author - %s?context=1", self.permalink(comment))
             comment.mod.remove()
             return True
         return False
@@ -171,12 +171,12 @@ class OuijaPost(object):
                     # the letter is already insered
                     if comment.created > existing[body].created and not comment.replies:
                         # the new comment is newer and does not have replies: delete it
-                        LOGGER.info("Deleting - duplicated - %s", self.permalink(comment))
+                        LOGGER.info("Deleting - duplicated - %s?", self.permalink(parent))
                         comment.mod.remove()
                         continue
                     if not existing[body].replies:
                         # the previous comment has not replies: delete it
-                        LOGGER.info("Deleting - duplicated - %s", self.permalink(existing[body]))
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         existing[body].mod.remove()
                         existing[body] = comment
                         continue

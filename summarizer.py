@@ -9,6 +9,7 @@ TIME_LIMIT = DAYS * 24 * 60 * 60 * 1000
 NEWER_THAN = time.time() - TIME_LIMIT
 
 DATE_FORMAT = '%d/%m/%Y'
+ANSWER_FORMAT = '#### [{title}]({url})\n\n> {answer}\n\n'
 
 ANSWERED_FLAIR = bot.ANSWERED['text']
 
@@ -42,7 +43,7 @@ class Summarizer():
             'url': submission.url,
             'answer': submission.link_flair_text.replace(ANSWERED_FLAIR, '')
         }
-        self.text += '#### [{title}]({url})\n\n| {answer}\n\n'.format(**params)
+        self.text += ANSWER_FORMAT.format(**params)
 
     def wiki(self) -> None:
         """Transfer parsed pages to subreddit wiki"""

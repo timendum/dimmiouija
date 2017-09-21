@@ -56,3 +56,4 @@ nosetests.xml
 
 # local generated files
 praw.ini
+*.md

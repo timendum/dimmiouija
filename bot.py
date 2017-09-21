@@ -224,7 +224,7 @@ class Ouija(object):
 
     def close(self):
         """Close the subreddit to new submission"""
-        self.subreddit.update(subreddit_type='restricted')
+        self.subreddit.mod.update(subreddit_type='restricted')
         LOGGER.info("Subreddit chiuso")
 
 

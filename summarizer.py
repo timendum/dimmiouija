@@ -47,6 +47,8 @@ class Summarizer():
     def wiki(self) -> None:
         """Transfer parsed pages to subreddit wiki"""
         text = self.title + '\n\n' + self.text
+        with open(self.name + ".md", "w", encoding="utf-8") as fout:
+            fout.write(text)
         self.subreddit.wiki[self.title].edit(text, 'Pagina creata')
 
     def check_submissions(self):

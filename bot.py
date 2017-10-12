@@ -209,6 +209,8 @@ class Ouija(object):
                 continue
             if submission.stickied:
                 continue
+            if not submission.is_unanswered():
+                continue
             post = OuijaPost(submission)
             if post.is_fresh() or post.is_unanswered():
                 answer = post.process()

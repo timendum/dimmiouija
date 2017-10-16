@@ -185,6 +185,8 @@ class OuijaPost(object):
                 if self.find_answers(comment):
                     # compose the answer
                     self.answer_text = body + self.answer_text
+                    # to uppercase
+                    self.answer_text = self.answer_text.upper()
                     found = True
             else:
                 # comment is by user and longer than 1 char (unicode ok), delete it

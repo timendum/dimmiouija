@@ -13,7 +13,16 @@ AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
+WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
+MESI = [
+    'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre',
+    'ottobre', 'novembre', 'dicembre'
+]
+PROSSIMA_TITOLO = 'Riapriamo il '
+PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
+Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
+PROSSIMA_COMMENTO = "Chi vuole essere notificato della prossima apertura, risponda un commento."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -228,6 +237,13 @@ class Ouija(object):
         """Close the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type='restricted')
         LOGGER.info("Subreddit chiuso")
+        next_day = time.localtime(time.time() + WAIT_NEXT)
+        title = PROSSIMA_TITOLO + str(next_day.tm_mday) + ' '
+        title = title + MESI[next_day.tm_mon]
+        submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
+        submission.mod.sticky()
+        submission.mod.distinguish()
+        submission.reply(PROSSIMA_COMMENTO)
 
 
 def main():

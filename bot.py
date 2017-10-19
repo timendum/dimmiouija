@@ -136,13 +136,21 @@ class OuijaPost(object):
 
         Return True if deleted, False otherwise.
         """
+        def delete_thread(comment):
+            """Delete comments and all children"""
+            replies = comment.replies
+            replies.replace_more(limit=None)
+            for reply in replies.list():
+                reply.mod.remove()
+            comment.mod.remove()
+
         if comment.author.name == self.author:
             LOGGER.info("Deleting - OP = author - %s", self.permalink(parent))
-            comment.mod.remove()
+            delete_thread(comment)
             return True
         if comment.author.name == parent.author.name:
             LOGGER.info("Deleting - parent = author - %s?context=1", self.permalink(comment))
-            comment.mod.remove()
+            delete_thread(comment)
             return True
         return False
 

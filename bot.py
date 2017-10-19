@@ -23,6 +23,7 @@ PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
 PROSSIMA_COMMENTO = "Chi vuole essere notificato della prossima apertura, risponda un commento."
+APERTURA_COMMENTO = "Ciao, siamo aperti.\n\nUn saluto dagli spiriti."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -218,6 +219,7 @@ class Ouija(object):
     def __init__(self, subreddit):
         """Initialize."""
         reddit = Reddit(check_for_updates=False)
+        self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
 
     def check_hot(self):
@@ -240,6 +242,18 @@ class Ouija(object):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type='public')
         LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s" % self.subreddit.display_name)
+        for submission in self.subreddit.hot():
+            if submission.author == self.me and submission.distinguished:
+                # submission is the PROSSIMA_TITOLO
+                submission.mod.sticky(state=False)
+                for comment in submission.comments:
+                    if comment.distinguished:
+                        for to_notify in comment.replies:
+                            to_notify.reply(APERTURA_COMMENTO)
+                        break
+                else:
+                    for comment in submission.comments:
+                        comment.reply(APERTURA_COMMENTO)
 
     def close(self):
         """Close the subreddit to new submission"""
@@ -251,7 +265,9 @@ class Ouija(object):
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()
-        submission.reply(PROSSIMA_COMMENTO)
+        comment = submission.reply(PROSSIMA_COMMENTO)
+        comment.mod.distinguish()
+
 
 
 def main():

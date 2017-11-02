@@ -22,8 +22,8 @@ PROSSIMA_TITOLO = 'Riapriamo il '
 PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
-PROSSIMA_COMMENTO = "Chi vuole essere notificato della prossima apertura, risponda un commento."
-APERTURA_COMMENTO = "Ciao, siamo aperti.\n\nUn saluto dagli spiriti."
+PROSSIMA_COMMENTO = "Chi vuole essere notificato della prossima apertura, risponda a QUESTO commento."
+APERTURA_COMMENTO = "Ciao,  \nsiamo aperti.\n\nUn saluto dagli spiriti."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 

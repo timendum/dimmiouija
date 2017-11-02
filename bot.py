@@ -15,8 +15,8 @@ UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 MESI = [
-    'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre',
-    'ottobre', 'novembre', 'dicembre'
+    None, 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto',
+    'settembre', 'ottobre', 'novembre', 'dicembre'
 ]
 PROSSIMA_TITOLO = 'Riapriamo il '
 PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.

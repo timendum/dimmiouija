@@ -262,6 +262,7 @@ class Ouija(object):
                 else:
                     for comment in submission.comments:
                         comment.reply(APERTURA_COMMENTO)
+            break
 
     def close(self):
         """Close the subreddit to new submission"""

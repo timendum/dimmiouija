@@ -197,7 +197,7 @@ class OuijaPost(object):
                     # the letter is already insered
                     if comment.created > existing[body].created and len(comment.replies) < 1:
                         # the new comment is newer and does not have replies: delete it
-                        LOGGER.info("Deleting - duplicated - %s?", self.permalink(parent))
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         comment.mod.remove()
                         continue
                     if  len(existing[body].replies) < 1:
@@ -275,7 +275,6 @@ class Ouija(object):
         submission.mod.distinguish()
         comment = submission.reply(PROSSIMA_COMMENTO)
         comment.mod.distinguish()
-
 
 
 def main():

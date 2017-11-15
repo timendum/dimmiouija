@@ -50,7 +50,8 @@ class Summarizer():
         text = self.title + '\n\n' + self.text
         with open(self.name + ".md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki[self.title].edit(text, 'Pagina creata')
+        # Disabled, Reddit returns an error
+        # self.subreddit.wiki[self.title].create(text, 'Pagina creata')
 
     def check_submissions(self):
         """Check the hot submission for unanswered post"""

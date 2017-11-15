@@ -183,6 +183,14 @@ class OuijaPost(object):
             # check body
             body = comment.body.strip()
             if GOODBYE.match(body):
+                if existing.get('GOODBYE'):
+                    if comment.score < existing['GOODBYE'].score or \
+                       comment.created > existing['GOODBYE'].created:
+                        LOGGER.info("Deleting - duplicated goodbye - %s", self.permalink(parent))
+                        comment.mod.remove()
+                        continue
+                existing['GOODBYE'] = comment
+                # check if the new answer is an accepted one (and store the results)
                 found = found or self.accept_answer(comment)
             elif len(body) == 1:
                 if existing.get(body):

@@ -13,6 +13,7 @@ AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
+MODPOST = {'text': 'DimmiOuija', 'class': 'DimmiOuija'}
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 MESI = [
     None, 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto',
@@ -235,8 +236,12 @@ class Ouija(object):
         submissions = self.subreddit.hot(limit=100)
         for submission in submissions:
             if submission.distinguished:
+                if not submission.link_flair_text:
+                    submission.mod.flair(MODPOST['text'], MODPOST['class'])
                 continue
             if submission.stickied:
+                if not submission.link_flair_text:
+                    submission.mod.flair(MODPOST['text'], MODPOST['class'])
                 continue
             post = OuijaPost(submission)
             if post.is_unanswered():

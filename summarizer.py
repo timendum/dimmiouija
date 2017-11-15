@@ -1,6 +1,7 @@
 """Summarize a brief period of DimmiOuija activity"""
 import datetime
 import time
+from typing import List, Dict
 import bot
 import praw
 
@@ -24,7 +25,7 @@ class Summarizer():
         self.subreddit = reddit.subreddit(subreddit)
         self.title = 'Risposte dal {from} al {to}'.format(**dates)
         self.name = dates['week']
-        self.text = ''
+        self.questions = [] # type: List[Dict]
 
     @staticmethod
     def __dates():
@@ -43,11 +44,12 @@ class Summarizer():
             'url': submission.url,
             'answer': submission.link_flair_text.replace(ANSWERED_FLAIR, '')
         }
-        self.text += ANSWER_FORMAT.format(**params)
+        self.questions.append(params)
 
     def wiki(self) -> None:
         """Transfer parsed pages to subreddit wiki"""
-        text = self.title + '\n\n' + self.text
+        text = ''.join([ANSWER_FORMAT.format(**question) for question in self.questions])
+        text = self.title + '\n\n' + text
         with open(self.name + ".md", "w", encoding="utf-8") as fout:
             fout.write(text)
         # Disabled, Reddit returns an error

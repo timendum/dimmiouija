@@ -146,11 +146,11 @@ class OuijaPost(object):
                 reply.mod.remove()
             comment.mod.remove()
 
-        if comment.author.name == self.author:
+        if comment.author and comment.author.name == self.author:
             LOGGER.info("Deleting - OP = author - %s", self.permalink(parent))
             delete_thread(comment)
             return True
-        if comment.author.name == parent.author.name:
+        if comment.author and comment.author.name == parent.author.name:
             LOGGER.info("Deleting - parent = author - %s?context=1", self.permalink(comment))
             delete_thread(comment)
             return True
@@ -165,8 +165,6 @@ class OuijaPost(object):
         """Given a comment return a list of open and closed replies"""
         found = False
         existing = {}
-        if isinstance(parent, CommentForest):
-            parent.replace_more(limit=None)
         # try replies for parent=comment
         try:
             comments = parent.replies
@@ -177,6 +175,9 @@ class OuijaPost(object):
         for comment in comments:
             # skip comments by mods or removed comments
             if comment.stickied or comment.distinguished or comment.removed:
+                continue
+            # skip [deleted] comments
+            if not comment.author:
                 continue
             # if modeation is applied (comment removed), skip
             if self.moderation(comment, parent):

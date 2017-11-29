@@ -94,7 +94,7 @@ class OuijaPost(object):
         """Check if the submission is Unanswered"""
         if not self._post.link_flair_text:
             return True
-        return self._post.link_flair_text == UNANSWERED['text']
+        return self._post.link_flair_css_class == UNANSWERED['class']
 
     def is_fresh(self):
         """Check if the submission is younger then YESTERDAY"""
@@ -267,7 +267,7 @@ class Ouija(object):
                 else:
                     for comment in submission.comments:
                         comment.reply(APERTURA_COMMENTO)
-            break
+                break
 
     def close(self):
         """Close the subreddit to new submission"""

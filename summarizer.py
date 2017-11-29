@@ -142,7 +142,7 @@ class Summarizer():
             text += '[%s](%s)\n\n' % (minsized[0][1],
                                       self.reddit.submission(id=minsized[0][0]).permalink)
         else:
-            text += 'Le risposte più corta (%d caratteri) sono state: \n\n' % (minsize)
+            text += 'Le risposte più corte (%d caratteri) sono state: \n\n' % (minsize)
             for answer in minsized:
                 text += '* [%s](%s)\n' % (answer[1], self.reddit.submission(id=answer[0]).permalink)
         return text

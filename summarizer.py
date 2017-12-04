@@ -1,6 +1,7 @@
 """Summarize a brief period of DimmiOuija activity"""
 from collections import defaultdict
 import datetime
+from statistics import mean, median_grouped as median, mode
 import time
 from typing import List, Dict, Tuple
 import bot
@@ -119,7 +120,7 @@ class Summarizer():
     def _answer_size(self, solutions: List[Tuple[str, str]]) -> str:
         text = '## Lunghezza delle risposte\n\n'
         # max
-        text += 'Le risposte più lunghe sono state: \n\n'
+        text += 'Le risposte più lunghe sono state:\n\n'
         value = None
         for idx, answer in enumerate(reversed(solutions)):
             if value != answer[1] and idx > 4:
@@ -145,6 +146,14 @@ class Summarizer():
             text += 'Le risposte più corte (%d caratteri) sono state: \n\n' % (minsize)
             for answer in minsized:
                 text += '* [%s](%s)\n' % (answer[1], self.reddit.submission(id=answer[0]).permalink)
+        # averange
+        text += '### Statistiche\n\n'
+        text += 'La lunghezza media delle risposte è stata: %g\n  ' % mean(
+            [len(solution[1]) for solution in solutions])
+        text += 'La mediana della lunghezze delle risposte è stata: %g\n  ' % median(
+            [len(solution[1]) for solution in solutions])
+        text += 'La moda della lunghezze delle risposte è stata: %g\n' % mode(
+            [len(solution[1]) for solution in solutions])
         return text
 
     def _authors(self, authors: List[Tuple[str, int]]) -> str:
@@ -167,6 +176,14 @@ class Summarizer():
                 break
             value = user[1]
             text += '1. /u/%s (%s)\n' % (user[0], user[1])
+        # averange
+        text += '### Statistiche\n\n'
+        text += 'Il numero medio di lettere per utente è stato: %g\n  ' % mean(
+            [solver[1] for solver in solvers])
+        text += 'La mediana del numero di lettere per utente è stato: %g\n  ' % median(
+            [solver[1] for solver in solvers])
+        text += 'La moda del numero di lettere per utente è stato: %g\n' % mode(
+            [solver[1] for solver in solvers])
         return text
 
     def _open_time(self, open_time: List[Tuple[str, int]]) -> str:
@@ -209,6 +226,7 @@ class Summarizer():
         return text
 
     def write_stats(self) -> None:
+        """Write a <time>_stats.md file with statistics"""
         stats = self.make_stats()
         solutions = self.solutions()
         text = '#' + self.title_stats + '\n\n'
@@ -246,10 +264,12 @@ class Summarizer():
     def main(self):
         """Perform all bot actions"""
         self.check_submissions()
-        #self.wiki()
+        self.write_answers()
+        self.write_stats()
 
 
 if __name__ == "__main__":
     SUMMARY = Summarizer('DimmiOuija')
     SUMMARY.check_submissions()
+    SUMMARY.write_answers()
     SUMMARY.write_stats()

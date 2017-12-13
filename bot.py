@@ -182,8 +182,8 @@ class OuijaPost(object):
             # if modeation is applied (comment removed), skip
             if self.moderation(comment, parent):
                 continue
-            # check body
-            body = comment.body.strip()
+            # check body (remove space and escape chars)
+            body = comment.body.strip().lstrip('\\')
             if GOODBYE.match(body):
                 if existing.get('GOODBYE'):
                     if comment.score < existing['GOODBYE'].score or \

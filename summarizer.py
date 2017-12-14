@@ -148,9 +148,9 @@ class Summarizer():
                 text += '* [%s](%s)\n' % (answer[1], self.reddit.submission(id=answer[0]).permalink)
         # averange
         text += '### Statistiche\n\n'
-        text += 'La lunghezza media delle risposte è stata: %g\n  ' % mean(
+        text += 'La lunghezza media delle risposte è stata: %g  \n' % mean(
             [len(solution[1]) for solution in solutions])
-        text += 'La mediana della lunghezze delle risposte è stata: %g\n  ' % median(
+        text += 'La mediana della lunghezze delle risposte è stata: %g  \n' % median(
             [len(solution[1]) for solution in solutions])
         text += 'La moda della lunghezze delle risposte è stata: %g\n' % mode(
             [len(solution[1]) for solution in solutions])
@@ -177,10 +177,10 @@ class Summarizer():
             value = user[1]
             text += '1. /u/%s (%s)\n' % (user[0], user[1])
         # averange
-        text += '### Statistiche\n\n'
-        text += 'Il numero medio di lettere per utente è stato: %g\n  ' % mean(
+        text += '\n### Statistiche\n\n'
+        text += 'Il numero medio di lettere per utente è stato: %g  \n' % mean(
             [solver[1] for solver in solvers])
-        text += 'La mediana del numero di lettere per utente è stato: %g\n  ' % median(
+        text += 'La mediana del numero di lettere per utente è stato: %g  \n' % median(
             [solver[1] for solver in solvers])
         text += 'La moda del numero di lettere per utente è stato: %g\n' % mode(
             [solver[1] for solver in solvers])

@@ -102,7 +102,7 @@ class OuijaPost(object):
 
     def change_flair(self):
         """Flair the post based on answer_text"""
-        if not self.answer_text:
+        if self.answer_text is None:
             if not self._post.link_flair_text:
                 self._post.mod.flair(UNANSWERED['text'], UNANSWERED['class'])
                 LOGGER.debug("Flair - UNANSWERED - https://www.reddit.com%s", self._post.permalink)

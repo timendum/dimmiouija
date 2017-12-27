@@ -82,7 +82,10 @@ class OuijaPost(object):
     def __init__(self, post):
         """Initialize."""
         self._post = post
-        self.author = post.author.name
+        if post.author:
+            self.author = post.author.name
+        else:
+            self.author = None
         self.question = post.title
         self.answer_text = None
         self.answer_score = float('-inf')

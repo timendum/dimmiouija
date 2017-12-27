@@ -5,7 +5,6 @@ import logging
 import re
 import time
 from praw import Reddit
-from praw.models.comment_forest import CommentForest
 from slacker import Slacker
 
 AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'

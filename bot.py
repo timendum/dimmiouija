@@ -234,9 +234,9 @@ class Ouija(object):
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
 
-    def check_hot(self):
-        """Check the hot submission for unanswered post"""
-        submissions = self.subreddit.hot(limit=100)
+    def check_submission(self):
+        """Check the submission for unanswered post"""
+        submissions = self.subreddit.new(limit=100)
         for submission in submissions:
             if submission.distinguished:
                 if not submission.link_flair_text:
@@ -297,8 +297,8 @@ def main():
     args = parser.parse_args()
 
     bot = Ouija('DimmiOuija')
-    if args.action == 'hot':
-        bot.check_hot()
+    if args.action == 'check':
+        bot.check_submission()
     elif args.action == 'open':
         bot.open()
     elif args.action == 'close':

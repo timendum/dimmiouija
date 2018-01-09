@@ -2,16 +2,11 @@
 from collections import defaultdict
 import datetime
 from statistics import mean, median_grouped as median, mode
-import time
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 import bot
 import praw
 from praw.models.reddit.comment import Comment
 from praw.models.reddit.submission import Submission
-
-DAYS = 7
-TIME_LIMIT = DAYS * 24 * 60 * 60 * 1000
-NEWER_THAN = time.time() - TIME_LIMIT
 
 DATE_FORMAT = '%d/%m/%Y'
 ANSWER_FORMAT = '#### [{title}]({url})\n\n> {answer}\n\n'
@@ -55,19 +50,18 @@ class Summarizer():
         dates = Summarizer.__dates()
         self.reddit = reddit
         self.subreddit = reddit.subreddit(subreddit)
-        self.title_wiki = 'Risposte dal {from} al {to}'.format(**dates)
-        self.title_stats = 'Statistiche dal {from} al {to}'.format(**dates)
+        self.title_wiki = 'Risposte del {day}'.format(**dates)
+        self.title_stats = 'Statistiche dal {day}'.format(**dates)
         self.name = dates['week']
         self.questions = []  # type: List[Dict]
 
     @staticmethod
     def __dates():
         today = datetime.date.today()
-        from_day = today - datetime.timedelta(days=DAYS)
+        day = today - datetime.timedelta(days=1)
         return {
             'week': today.strftime('%Y_%W'),
-            'to': today.strftime(DATE_FORMAT),
-            'from': from_day.strftime(DATE_FORMAT)
+            'day': day.strftime(DATE_FORMAT)
         }
 
     def parse_submission(self, submission: Submission) -> None:
@@ -187,6 +181,11 @@ class Summarizer():
         return text
 
     def _open_time(self, open_time: List[Tuple[str, int]]) -> str:
+        def time_string(open_time: Union[float, int]) -> str:
+            if open_time < 60 * 60 * 2:
+                return '%s minuti' % round(open_time / 60)
+            return '%s ore' % round(open_time / 60 / 60)
+
         text = '## Tempi delle risposte\n\n'
         text += 'La classifica delle tempi di chiusura: \n\n'
         submission = None
@@ -199,10 +198,13 @@ class Summarizer():
         text += '\n...\n\n'
         submission = self.reddit.submission(id=open_time[-1][0])
         text += 'Ultimo: [%s](%s)' % (submission.title, submission.permalink)
-        if open_time[-1][1] < 60 * 60 * 2:
-            text += '(%s minuti)\n' % round(open_time[-1][1] / 60)
-        else:
-            text += '(%s ore)\n' % round(open_time[-1][1] / 60 / 60)
+        text += '(%s)\n' % time_string(open_time[-1][1])
+        # averange
+        text += '\n### Statistiche\n\n'
+        text += 'Le domande hanno dovuto attendere per una risposta mediamente %s  \n' % time_string(mean(
+            [timing[1] for timing in open_time]))
+        text += 'La mediana del numero di lettere per utente è stato: %s\n' % time_string(median(
+            [timing[1] for timing in open_time]))
         return text
 
     def _goodbyers(self, goodbyers: List[Tuple[str, int]]) -> str:
@@ -227,6 +229,9 @@ class Summarizer():
 
     def write_stats(self) -> None:
         """Write a <time>_stats.md file with statistics"""
+        if len(self.questions) < 1:
+            print('No question found')
+            return
         stats = self.make_stats()
         solutions = self.solutions()
         text = '#' + self.title_stats + '\n\n'

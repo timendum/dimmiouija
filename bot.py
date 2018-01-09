@@ -291,8 +291,8 @@ def main():
     parser = argparse.ArgumentParser(description='Activate mod bot on /r/DimmiOuija ')
     parser.add_argument(
         'action',
-        choices=['hot', 'open', 'close'],
-        default='hot',
+        choices=['check', 'open', 'close'],
+        default='check',
         help='The action to perform (default: %(default)s)')
     args = parser.parse_args()
 

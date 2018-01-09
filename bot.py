@@ -3,6 +3,7 @@
 import argparse
 import logging
 import re
+import random
 import time
 from praw import Reddit
 from slacker import Slacker
@@ -115,6 +116,24 @@ class OuijaPost(object):
             if text != self.flair:
                 self._post.mod.flair(text, ANSWERED['class'])
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
+
+    def change_userflair(self):
+        """"Randomly change user flair and send a PM for notification"""
+        if self.answer_text is None:
+            return
+        if not self.author:
+            return
+        if random.randrange(5) == 0:
+            self._post.subreddit.flair.set(redditor=self.author, text=self.answer_text)
+            self._post.author.message(
+                'OUIJA ha deciso',
+                'Tu hai chiesto: %s  \n' % self.question +
+                'Ouija dice: %s\n' % self.answer_text +
+                '\n Inoltre la risposta ti è stata assegnata come etichetta, gioisci!',
+                from_subreddit=self._post.subreddit
+            )
+            LOGGER.info("Flair utente - %s - %s" % (self.author, self.answer_text))
+
 
     def process(self):
         """Check for answers in the comments and delete wrong comments"""
@@ -253,6 +272,7 @@ class Ouija(object):
                     if post.answer_score <= 1:
                         post.answer_text = None
                 post.change_flair()
+                post.change_userflair()
 
     def open(self):
         """Open the subreddit to new submission"""

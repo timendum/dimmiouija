@@ -15,7 +15,7 @@ DimmiOuija bot is a reddit bot that manages /r/DimmiOuija subreddit
 
 ## License
 
-Copyright (c) 2017 Timendum
+Copyright (c) 2018 Timendum
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

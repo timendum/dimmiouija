@@ -272,7 +272,7 @@ class Ouija(object):
                     if post.answer_score <= 1:
                         post.answer_text = None
                 post.change_flair()
-                post.change_userflair()
+                #post.change_userflair()
 
     def open(self):
         """Open the subreddit to new submission"""

@@ -1,12 +1,17 @@
 """Summarize a brief period of DimmiOuija activity"""
-from collections import defaultdict
 import datetime
-from statistics import mean, median_grouped as median, mode
-from typing import List, Dict, Tuple, Union
-import bot
+import json
+import unicodedata
+from collections import defaultdict
+from statistics import median_grouped as median
+from statistics import mean, mode
+from typing import Dict, List, Tuple, Union
+
 import praw
 from praw.models.reddit.comment import Comment
 from praw.models.reddit.submission import Submission
+
+import bot
 
 DATE_FORMAT = '%d/%m/%Y'
 ANSWER_FORMAT = '#### [{title}]({url})\n\n> {answer}\n\n'
@@ -53,44 +58,31 @@ class Summarizer():
         self.title_wiki = 'Risposte del {day}'.format(**dates)
         self.title_stats = 'Statistiche dal {day}'.format(**dates)
         self.name = dates['week']
-        self.questions = []  # type: List[Dict]
 
     @staticmethod
     def __dates():
         today = datetime.date.today()
         day = today - datetime.timedelta(days=1)
-        return {
-            'week': today.strftime('%Y_%W'),
-            'day': day.strftime(DATE_FORMAT)
-        }
+        return {'week': today.strftime('%Y_%W'), 'day': day.strftime(DATE_FORMAT)}
 
-    def parse_submission(self, submission: Submission) -> None:
-        """Add the submission to text"""
-        params = {
-            'title': submission.title,
-            'url': submission.url,
-            'thread': submission,
-            'answer': submission.link_flair_text.replace(ANSWERED_FLAIR, '')
-        }
-        self.questions.append(params)
-
-    def write_answers(self) -> None:
+    def write_answers(self, questions: List[Dict]) -> None:
         """Transfer parsed pages to subreddit wiki"""
-        text = ''.join([ANSWER_FORMAT.format(**question) for question in self.questions])
+        text = ''.join([ANSWER_FORMAT.format(**question) for question in questions])
         text = self.title_wiki + '\n\n' + text
         with open(self.name + ".md", "w", encoding="utf-8") as fout:
             fout.write(text)
         # Disabled, Reddit returns an error
         # self.subreddit.wiki[self.title].create(text, 'Pagina creata')
 
-    def make_stats(self) -> Dict[str, List[Tuple[str, int]]]:
+    @staticmethod
+    def make_stats(questions: List[Dict]) -> Dict[str, List[Tuple[str, int]]]:
         """Return statistics of parsed questions with answer"""
         authors = defaultdict(int)  # type: Dict[str, int]
         solvers = defaultdict(int)  # type: Dict[str, int]
         goodbyers = defaultdict(int)  # type: Dict[str, int]
         chars = defaultdict(int)  # type: Dict[str, int]
         open_time = {}  # type: Dict[str, int]
-        for question in self.questions:
+        for question in questions:
             submission = question['thread']
             authors[author(submission)] += 1
             stree = find_solution(submission, question['answer'])  # solution tree
@@ -102,6 +94,8 @@ class Summarizer():
             open_time[submission.id] = goodbye.created_utc - submission.created_utc
             for comment in stree:
                 solvers[author(comment)] += 1
+                char = comment.body.strip().upper()
+                char = unicodedata.normalize('NFD', char).encode('ascii', 'ignore').decode('utf8')
                 chars[comment.body.strip().upper()] += 1
         return {
             'authors': sorted(authors.items(), key=lambda item: item[1]),
@@ -140,6 +134,7 @@ class Summarizer():
             text += 'Le risposte più corte (%d caratteri) sono state: \n\n' % (minsize)
             for answer in minsized:
                 text += '* [%s](%s)\n' % (answer[1], self.reddit.submission(id=answer[0]).permalink)
+            text += '\n'
         # averange
         text += '### Statistiche\n\n'
         text += 'La lunghezza media delle risposte è stata: %g  \n' % mean(
@@ -150,7 +145,8 @@ class Summarizer():
             [len(solution[1]) for solution in solutions])
         return text
 
-    def _authors(self, authors: List[Tuple[str, int]]) -> str:
+    @staticmethod
+    def _authors(authors: List[Tuple[str, int]]) -> str:
         text = '## Autori delle domande\n\n'
         text += 'Gli utenti che hanno posto più domande sono stati: \n\n'
         value = None
@@ -161,8 +157,10 @@ class Summarizer():
             text += '1. /u/%s (%s)\n' % (user[0], user[1])
         return text
 
-    def _solvers(self, solvers: List[Tuple[str, int]]) -> str:
+    @staticmethod
+    def _solvers(solvers: List[Tuple[str, int]]) -> str:
         text = '## Autori delle risposte\n\n'
+        text += 'Alle risposte hanno partecipato %s spiriti.\n\n' % len(solvers)
         text += 'Gli utenti che hanno contribuito di più alle risposte sono stati: \n\n'
         value = None
         for idx, user in enumerate(reversed(solvers)):
@@ -182,6 +180,7 @@ class Summarizer():
 
     def _open_time(self, open_time: List[Tuple[str, int]]) -> str:
         def time_string(open_time: Union[float, int]) -> str:
+            """It converts Numeric seconds to italian string"""
             if open_time < 60 * 60 * 2:
                 return '%s minuti' % round(open_time / 60)
             return '%s ore' % round(open_time / 60 / 60)
@@ -201,13 +200,14 @@ class Summarizer():
         text += '(%s)\n' % time_string(open_time[-1][1])
         # averange
         text += '\n### Statistiche\n\n'
-        text += 'Le domande hanno dovuto attendere per una risposta mediamente %s  \n' % time_string(mean(
-            [timing[1] for timing in open_time]))
-        text += 'La mediana del numero di lettere per utente è stato: %s\n' % time_string(median(
-            [timing[1] for timing in open_time]))
+        text += 'Le domande hanno dovuto attendere per una risposta mediamente %s  \n' \
+                 % time_string(mean([timing[1] for timing in open_time]))
+        text += 'Il tempo mediano di apertura per le domande è stato: %s\n' % time_string(
+            median([timing[1] for timing in open_time]))
         return text
 
-    def _goodbyers(self, goodbyers: List[Tuple[str, int]]) -> str:
+    @staticmethod
+    def _goodbyers(goodbyers: List[Tuple[str, int]]) -> str:
         if next(reversed(goodbyers))[1] == 1:
             return ''
         text = '## Autori dei Goodbye\n\n'
@@ -219,22 +219,33 @@ class Summarizer():
             text += '1. /u/%s (%s)\n' % (user[0], user[1])
         return text
 
-    def _chars(self, chars: List[Tuple[str, int]]) -> str:
+    @staticmethod
+    def _chars(charstats: List[Tuple[str, int]]) -> str:
         text = '## I caratteri\n\n'
+        text += 'Sono stati utilizzati %d caratteri diversi: \n\n' % len(charstats)
         text += 'I caratteri più utilizzati sono stati: \n\n'
         text += 'Char | Freq\n---|---\n'
-        for c in reversed(chars):
-            text += '%s | %d\n' % (c[0], c[1])
+        for charstat in reversed(charstats):
+            text += '%s | %d\n' % (charstat[0], charstat[1])
+        text += '\n^(Nota: i caratteri sono stati normalizzati su codifica ASCII)\n'
         return text
 
-    def write_stats(self) -> None:
+    @staticmethod
+    def _basics(solutions, stats) -> str:
+        text = '## Partecipazione\n\n'
+        text += 'Gli spiriti hanno risposto a %d domande.\n\n' % len(solutions)
+        text += 'Che sono presentate presentate da %d questionanti.\n\n' % len(stats['authors'])
+        mediums = set([author[0] for author in stats['solvers']]) | \
+                  set([author[0] for author in stats['goodbyers']])
+        text += 'Hanno partecipato %d medium.\n\n' % len(mediums)
+        text += 'Le risposte sono state lunghe %d caratteri.\n' % \
+                sum([charstat[1] for charstat in stats['chars']])
+        return text
+
+    def write_stats(self, solutions: List[Tuple[str, str]], stats) -> None:
         """Write a <time>_stats.md file with statistics"""
-        if len(self.questions) < 1:
-            print('No question found')
-            return
-        stats = self.make_stats()
-        solutions = self.solutions()
         text = '#' + self.title_stats + '\n\n'
+        text += self._basics(solutions, stats) + '\n'
         text += self._answer_size(solutions) + '\n'
         text += self._authors(stats['authors']) + '\n'
         text += self._solvers(stats['solvers']) + '\n'
@@ -244,17 +255,30 @@ class Summarizer():
         with open(self.name + "_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
 
-    def solutions(self) -> List[Tuple[str, str]]:
+    @staticmethod
+    def solutions(questions: List[Dict]) -> List[Tuple[str, str]]:
         """Return a List of (id of submission, solution text)"""
         solutions = {}  # type: Dict[str, str]
-        for question in self.questions:
+        for question in questions:
             submission = question['thread']
             solutions[submission.id] = question['answer']
         return sorted(solutions.items(), key=lambda item: len(item[1]))
 
-    def check_submissions(self):
-        """Check the hot submission for unanswered post"""
+    def get_questions(self) -> List[Dict]:
+        """Check the hot submission of answered posts"""
         submissions = self.subreddit.top(time_filter='week', limit=None)
+        questions = []  # type: List[Dict]
+
+        def parse_submission(submission: Submission) -> None:
+            """Add the submission to text"""
+            params = {
+                'title': submission.title,
+                'url': submission.url,
+                'thread': submission,
+                'answer': submission.link_flair_text.replace(ANSWERED_FLAIR, '')
+            }
+            questions.append(params)
+
         for submission in submissions:
             if submission.distinguished:
                 continue
@@ -264,17 +288,36 @@ class Summarizer():
                 continue
             if not submission.link_flair_text.startswith(ANSWERED_FLAIR):
                 continue
-            self.parse_submission(submission)
+            parse_submission(submission)
+        return questions
 
-    def main(self):
-        """Perform all bot actions"""
-        self.check_submissions()
-        self.write_answers()
-        self.write_stats()
+    def save_infos(self, solutions, stats):
+        """Write variablies to JSON"""
+        state = {'solutions': solutions, 'stats': stats}
+        with open('%s.json' % self.name, 'wt', encoding="utf-8") as fout:
+            json.dump(state, fout)
+
+    def load_infos(self):
+        """Read variablies from JSON"""
+        with open('%s.json' % self.name, 'rt', encoding="utf-8") as fin:
+            state = json.load(fin)
+        return state['solutions'], state['stats']
+
+
+def main():
+    """Perform all bot actions"""
+    summary = Summarizer('DimmiOuija')
+    questions = summary.get_questions()
+    summary.write_answers(questions)
+    solutions = summary.solutions(questions)
+    if len(questions) < 1:
+        print('No question found')
+        return
+    stats = summary.make_stats(questions)
+    summary.save_infos(solutions, stats)
+    # solutions, stats = summary.load_infos()
+    summary.write_stats(solutions, stats)
 
 
 if __name__ == "__main__":
-    SUMMARY = Summarizer('DimmiOuija')
-    SUMMARY.check_submissions()
-    SUMMARY.write_answers()
-    SUMMARY.write_stats()
+    main()

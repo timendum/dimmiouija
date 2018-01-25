@@ -58,3 +58,4 @@ nosetests.xml
 praw.ini
 *.md
 !README.md
+20*.json

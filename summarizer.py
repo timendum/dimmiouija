@@ -4,7 +4,7 @@ import json
 import unicodedata
 from collections import defaultdict
 from statistics import median_grouped as median
-from statistics import mean, mode
+from statistics import mean, mode, StatisticsError
 from typing import Dict, List, Tuple, Union
 
 import praw

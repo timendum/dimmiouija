@@ -141,8 +141,11 @@ class Summarizer():
             [len(solution[1]) for solution in solutions])
         text += 'La mediana della lunghezze delle risposte è stata: %g  \n' % median(
             [len(solution[1]) for solution in solutions])
-        text += 'La moda della lunghezze delle risposte è stata: %g\n' % mode(
-            [len(solution[1]) for solution in solutions])
+        try:
+            text += 'La moda della lunghezze delle risposte è stata: %g\n' % mode(
+                [len(solution[1]) for solution in solutions])
+        except StatisticsError:
+            pass
         return text
 
     @staticmethod

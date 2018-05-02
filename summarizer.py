@@ -114,9 +114,10 @@ class Summarizer():
             if value != answer[1] and idx > 4:
                 break
             value = answer[1]
-            text += '1. [%s](%s) (%d)\n' % (answer[1],
-                                            self.reddit.submission(id=answer[0]).permalink,
-                                            len(answer[1]))
+            text += '1. [{text}]({url}) ({extra:d})\n'.format(
+                text=answer[1],
+                url=self.reddit.submission(id=answer[0]).permalink,
+                extra=len(answer[1]))
         # min
         text += '\n'
         minsize = len(solutions[0][1])
@@ -127,23 +128,24 @@ class Summarizer():
             else:
                 break
         if len(minsized) == 1:
-            text += 'La risposta più corta (%d caratteri) è stata: ' % (minsize)
-            text += '[%s](%s)\n\n' % (minsized[0][1],
-                                      self.reddit.submission(id=minsized[0][0]).permalink)
+            text += 'La risposta più corta ({:d} caratteri) è stata: '.format(minsize)
+            text += '[{text}]({url})\n\n'.format(
+                text=minsized[0][1], url=self.reddit.submission(id=minsized[0][0]).permalink)
         else:
-            text += 'Le risposte più corte (%d caratteri) sono state: \n\n' % (minsize)
+            text += 'Le risposte più corte ({:d} caratteri) sono state: \n\n'.format(minsize)
             for answer in minsized:
-                text += '* [%s](%s)\n' % (answer[1], self.reddit.submission(id=answer[0]).permalink)
+                text += '* [{text}]({url})\n'.format(
+                    text=answer[1], url=self.reddit.submission(id=answer[0]).permalink)
             text += '\n'
         # averange
         text += '### Statistiche\n\n'
-        text += 'La lunghezza media delle risposte è stata: %g  \n' % mean(
-            [len(solution[1]) for solution in solutions])
-        text += 'La mediana della lunghezze delle risposte è stata: %g  \n' % median(
-            [len(solution[1]) for solution in solutions])
+        text += 'La lunghezza media delle risposte è stata: {:g}  \n'.format(
+            mean([len(solution[1]) for solution in solutions]))
+        text += 'La mediana della lunghezze delle risposte è stata: {:g}  \n'.format(
+            median([len(solution[1]) for solution in solutions]))
         try:
-            text += 'La moda della lunghezze delle risposte è stata: %g\n' % mode(
-                [len(solution[1]) for solution in solutions])
+            text += 'La moda della lunghezze delle risposte è stata: {:g}\n'.format(
+                mode([len(solution[1]) for solution in solutions]))
         except StatisticsError:
             pass
         return text
@@ -157,36 +159,36 @@ class Summarizer():
             if value != user[1] and idx > 4:
                 break
             value = user[1]
-            text += '1. /u/%s (%s)\n' % (user[0], user[1])
+            text += '1. /u/{text} ({extra})\n'.format(text=user[0], extra=user[1])
         return text
 
     @staticmethod
     def _solvers(solvers: List[Tuple[str, int]]) -> str:
         text = '## Autori delle risposte\n\n'
-        text += 'Alle risposte hanno partecipato %s spiriti.\n\n' % len(solvers)
+        text += 'Alle risposte hanno partecipato {:d} spiriti.\n\n'.format(len(solvers))
         text += 'Gli utenti che hanno contribuito di più alle risposte sono stati: \n\n'
         value = None
         for idx, user in enumerate(reversed(solvers)):
             if value != user[1] and idx > 9:
                 break
             value = user[1]
-            text += '1. /u/%s (%s)\n' % (user[0], user[1])
+            text += '1. /u/{text} ({extra})\n'.format(text=user[0], extra=user[1])
         # averange
         text += '\n### Statistiche\n\n'
-        text += 'Il numero medio di lettere per utente è stato: %g  \n' % mean(
-            [solver[1] for solver in solvers])
-        text += 'La mediana del numero di lettere per utente è stato: %g  \n' % median(
-            [solver[1] for solver in solvers])
-        text += 'La moda del numero di lettere per utente è stato: %g\n' % mode(
-            [solver[1] for solver in solvers])
+        text += 'Il numero medio di lettere per utente è stato: {:g}  \n'.format(
+            mean([solver[1] for solver in solvers]))
+        text += 'La mediana del numero di lettere per utente è stato: {:g}  \n'.format(
+            median([solver[1] for solver in solvers]))
+        text += 'La moda del numero di lettere per utente è stato: {:g}\n'.format(
+            mode([solver[1] for solver in solvers]))
         return text
 
     def _open_time(self, open_time: List[Tuple[str, int]]) -> str:
         def time_string(open_time: Union[float, int]) -> str:
             """It converts Numeric seconds to italian string"""
             if open_time < 60 * 60 * 2:
-                return '%s minuti' % round(open_time / 60)
-            return '%s ore' % round(open_time / 60 / 60)
+                return '{:d} minuti'.format(round(open_time / 60))
+            return '{:d} ore'.format(round(open_time / 60 / 60))
 
         text = '## Tempi delle risposte\n\n'
         text += 'La classifica delle tempi di chiusura: \n\n'
@@ -195,18 +197,18 @@ class Summarizer():
             if idx > 4:
                 break
             submission = self.reddit.submission(id=question[0])
-            text += '1. [%s](%s) (%s minuti)\n' % (submission.title, submission.permalink,
-                                                   round(question[1] / 60))
+            text += '1. [{text}]({url}) ({extra:d} minuti)\n'.format(
+                text=submission.title, url=submission.permalink, extra=round(question[1] / 60))
         text += '\n...\n\n'
         submission = self.reddit.submission(id=open_time[-1][0])
-        text += 'Ultimo: [%s](%s)' % (submission.title, submission.permalink)
-        text += '(%s)\n' % time_string(open_time[-1][1])
+        text += 'Ultimo: [{text}]({url})'.format(text=submission.title, url=submission.permalink)
+        text += '({})\n'.format(time_string(open_time[-1][1]))
         # averange
         text += '\n### Statistiche\n\n'
-        text += 'Le domande hanno dovuto attendere per una risposta mediamente %s  \n' \
-                 % time_string(mean([timing[1] for timing in open_time]))
-        text += 'Il tempo mediano di apertura per le domande è stato: %s\n' % time_string(
-            median([timing[1] for timing in open_time]))
+        text += 'Le domande hanno dovuto attendere per una risposta mediamente {}  \n'.format(
+            time_string(mean([timing[1] for timing in open_time])))
+        text += 'Il tempo mediano di apertura per le domande è stato: {}\n'.format(
+            time_string(median([timing[1] for timing in open_time])))
         return text
 
     @staticmethod
@@ -219,30 +221,31 @@ class Summarizer():
         for idx, user in enumerate(reversed(goodbyers)):
             if value != user[1] and idx > 4:
                 break
-            text += '1. /u/%s (%s)\n' % (user[0], user[1])
+            text += '1. /u/{user} ({extra})\n'.format(user=user[0], extra=user[1])
         return text
 
     @staticmethod
     def _chars(charstats: List[Tuple[str, int]]) -> str:
         text = '## I caratteri\n\n'
-        text += 'Sono stati utilizzati %d caratteri diversi: \n\n' % len(charstats)
+        text += 'Sono stati utilizzati {:d} caratteri diversi: \n\n'.format(len(charstats))
         text += 'I caratteri più utilizzati sono stati: \n\n'
         text += 'Char | Freq\n---|---\n'
         for charstat in reversed(charstats):
-            text += '%s | %d\n' % (charstat[0], charstat[1])
+            text += '{} | {}\n'.format(charstat[0], charstat[1])
         text += '\n^(Nota: i caratteri sono stati normalizzati su codifica ASCII)\n'
         return text
 
     @staticmethod
     def _basics(solutions, stats) -> str:
         text = '## Partecipazione\n\n'
-        text += 'Gli spiriti hanno risposto a %d domande.\n\n' % len(solutions)
-        text += 'Che sono presentate presentate da %d questionanti.\n\n' % len(stats['authors'])
+        text += 'Gli spiriti hanno risposto a {:d} domande.\n\n'.format(len(solutions))
+        text += 'Che sono presentate presentate da {:d} questionanti.\n\n'.format(
+            len(stats['authors']))
         mediums = set([author[0] for author in stats['solvers']]) | \
                   set([author[0] for author in stats['goodbyers']])
-        text += 'Hanno partecipato %d medium.\n\n' % len(mediums)
-        text += 'Le risposte sono state lunghe %d caratteri.\n' % \
-                sum([charstat[1] for charstat in stats['chars']])
+        text += 'Hanno partecipato {:d} medium.\n\n'.format(len(mediums))
+        text += 'Le risposte complessivamente sono lunghe {:d} caratteri.\n'.format(
+            sum([charstat[1] for charstat in stats['chars']]))
         return text
 
     def write_stats(self, solutions: List[Tuple[str, str]], stats) -> None:
@@ -297,12 +300,12 @@ class Summarizer():
     def save_infos(self, solutions, stats):
         """Write variablies to JSON"""
         state = {'solutions': solutions, 'stats': stats}
-        with open('%s.json' % self.name, 'wt', encoding="utf-8") as fout:
+        with open('{}.json'.format(self.name), 'wt', encoding="utf-8") as fout:
             json.dump(state, fout)
 
     def load_infos(self):
         """Read variablies from JSON"""
-        with open('%s.json' % self.name, 'rt', encoding="utf-8") as fin:
+        with open('{}.json'.format(self.name), 'rt', encoding="utf-8") as fin:
             state = json.load(fin)
         return state['solutions'], state['stats']
 

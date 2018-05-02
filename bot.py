@@ -27,53 +27,9 @@ APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati.\n\nUn saluto."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
-
-class Slack():
-    """Transmit messages to slack channel"""
-
-    def __init__(self):
-        dummy_reddit = Reddit(check_for_updates=False)
-        config = dummy_reddit.config.CONFIG['SLACK']
-        self.channel = config['channel']
-        del dummy_reddit
-        self.slack = Slacker(config['token'])
-        self._logger = logging.getLogger(__file__)
-        self._logger.addHandler(logging.NullHandler())
-        self._logger.setLevel(logging.INFO)
-        self._formatter = logging.Formatter()
-
-    def _format(self, level, msg, *args, **kwargs):
-        """Fromat message with default logging formatter"""
-        record = logging.LogRecord(None, level, None, None, msg, args, kwargs)
-        return self._formatter.format(record)
-
-    def setLevel(self, level):
-        """
-        Set the logging level of this logger.  level must be an int or a str.
-        """
-        self._logger.setLevel(level)
-
-    def debug(self, msg, *args, **kwargs):
-        """
-        Log 'msg % args' with severity 'DEBUG'.
-        """
-        if self._logger.isEnabledFor(logging.DEBUG):
-            self._logger.debug(msg, *args, **kwargs)
-            chat_message = self._format(logging.DEBUG, msg, *args, **kwargs)
-            self.slack.chat.post_message(self.channel, chat_message)
-
-    def info(self, msg, *args, **kwargs):
-        """
-        Log 'msg % args' with severity 'INFO'.
-        """
-        if self._logger.isEnabledFor(logging.INFO):
-            self._logger.info(msg, *args, **kwargs)
-            chat_message = self._format(logging.INFO, msg, *args, **kwargs)
-            self.slack.chat.post_message(self.channel, chat_message)
-
-
-LOGGER = Slack()
-
+LOGGER = logging.getLogger(__file__)
+LOGGER.addHandler(logging.NullHandler())
+LOGGER.setLevel(logging.INFO)
 
 class OuijaPost(object):
     """A post in ouija"""
@@ -131,7 +87,7 @@ class OuijaPost(object):
                 '\n Inoltre la risposta ti è stata assegnata come etichetta, gioisci!',
                 from_subreddit=self._post.subreddit
             )
-            LOGGER.info("Flair utente - %s - %s" % (self.author, self.answer_text))
+            LOGGER.info("Flair utente - %s - %s", self.author, self.answer_text)
 
 
     def process(self):
@@ -276,7 +232,7 @@ class Ouija(object):
     def open(self):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type='public')
-        LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s" % self.subreddit.display_name)
+        LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
         for submission in self.subreddit.hot():
             if submission.author == self.me and submission.distinguished:
                 # submission is the PROSSIMA_TITOLO

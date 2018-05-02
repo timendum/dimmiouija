@@ -6,7 +6,6 @@ import re
 import random
 import time
 from praw import Reddit
-from slacker import Slacker
 
 AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
 
@@ -23,8 +22,8 @@ PROSSIMA_TITOLO = 'Riapriamo il '
 PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
-PROSSIMA_COMMENTO = "Chi vuole essere notificato della prossima apertura, risponda a QUESTO commento."
-APERTURA_COMMENTO = "Ciao,  \nsiamo aperti.\n\nUn saluto dagli spiriti."
+PROSSIMA_COMMENTO = "Vuoi essere avvertito della prossima apertura? Rispondi a QUESTO commento."
+APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati.\n\nUn saluto."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 

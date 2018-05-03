@@ -58,6 +58,7 @@ class Summarizer():
         self.title_wiki = 'Risposte del {day}'.format(**dates)
         self.title_stats = 'Statistiche dal {day}'.format(**dates)
         self.name = dates['week']
+        self.fullname = dates['day']
 
     @staticmethod
     def __dates():
@@ -309,6 +310,19 @@ class Summarizer():
         with open('{}.json'.format(self.name), 'rt', encoding="utf-8") as fin:
             state = json.load(fin)
         return state['solutions'], state['stats']
+
+    def add_wiki(self):
+        """Add links in wiki index page"""
+        separator = '[](/list-separator)'
+        index = self.subreddit.wiki['index']
+        wikitemplate = index.content_md.split(separator)
+        new_row = """
+
+### [{text}](/r/{sub}/wiki/{short}) - [Statistiche](/r/{sub}/wiki/{short}_stats)"""
+        wikitemplate[1] = new_row.format(
+            text=self.fullname, short=self.name, sub=self.subreddit.display_name) + wikitemplate[1]
+        text = separator.join(wikitemplate)
+        index.edit(text, self.fullname)
 
 
 def main():

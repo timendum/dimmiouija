@@ -22,6 +22,7 @@ PROSSIMA_TITOLO = 'Riapriamo il '
 PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
+PROSSIMA_APERTE = "\n\nLe domande aperte ad ora sono:\n\n"
 PROSSIMA_COMMENTO = "Vuoi essere avvertito della prossima apertura? Rispondi a QUESTO commento."
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati.\n\nUn saluto."
 TIME_LIMIT = 24 * 60 * 60 * 1000
@@ -254,6 +255,14 @@ class Ouija(object):
         next_day = time.localtime(time.time() + WAIT_NEXT)
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + ' '
         title = title + MESI[next_day.tm_mon]
+        body = PROSSIMA_TESTO
+        unanswered = []
+        for submission in self.subreddit.new(limit=100):
+            if OuijaPost(submission).is_unanswered():
+                unanswered.append(submission)
+        if unanswered:
+            body += PROSSIMA_APERTE
+            body += "\n".join(["* [{}]({})".format(s.title, s.permalink) for s in unanswered])
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()

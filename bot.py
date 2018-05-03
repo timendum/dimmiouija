@@ -3,11 +3,10 @@
 import argparse
 import logging
 import re
-import random
 import time
-from praw import Reddit
+import praw
 
-AGENT = 'python:dimmi-ouja:0.1 (by /u/timendum)'
+AGENT = 'python:dimmi-ouja:0.2 (by /u/timendum)'
 
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
@@ -35,7 +34,7 @@ LOGGER.setLevel(logging.INFO)
 class OuijaPost(object):
     """A post in ouija"""
 
-    def __init__(self, post):
+    def __init__(self, post) -> None:
         """Initialize."""
         self._post = post
         if post.author:
@@ -43,19 +42,19 @@ class OuijaPost(object):
         else:
             self.author = None
         self.question = post.title
-        self.answer_text = None
+        self.answer_text = None # type: str
         self.answer_score = float('-inf')
-        self.flair = None
+        self.flair = None # type: str
         if post.link_flair_text and post.link_flair_text != UNANSWERED['text']:
             self.flair = post.link_flair_text
 
-    def is_unanswered(self):
+    def is_unanswered(self) -> bool:
         """Check if the submission is Unanswered"""
         if not self._post.link_flair_text:
             return True
         return self._post.link_flair_css_class == UNANSWERED['class']
 
-    def is_fresh(self):
+    def is_fresh(self) -> bool:
         """Check if the submission is younger then YESTERDAY"""
         return self._post.created_utc > YESTERDAY
 
@@ -73,31 +72,13 @@ class OuijaPost(object):
                 self._post.mod.flair(text, ANSWERED['class'])
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
-    def change_userflair(self):
-        """"Randomly change user flair and send a PM for notification"""
-        if self.answer_text is None:
-            return
-        if not self.author:
-            return
-        if random.randrange(5) == 0:
-            self._post.subreddit.flair.set(redditor=self.author, text=self.answer_text)
-            self._post.author.message(
-                'OUIJA ha deciso',
-                'Tu hai chiesto: %s  \n' % self.question +
-                'Ouija dice: %s\n' % self.answer_text +
-                '\n Inoltre la risposta ti è stata assegnata come etichetta, gioisci!',
-                from_subreddit=self._post.subreddit
-            )
-            LOGGER.info("Flair utente - %s - %s", self.author, self.answer_text)
-
-
-    def process(self):
+    def process(self) -> bool:
         """Check for answers in the comments and delete wrong comments"""
         self._post.comment_sort = 'top'
         self._post.comments.replace_more(limit=None)
         return self.find_answers(self._post)
 
-    def accept_answer(self, comment):
+    def accept_answer(self, comment) -> bool:
         """
         Check if the comment contain a better answer.
 
@@ -109,7 +90,7 @@ class OuijaPost(object):
             return True
         return False
 
-    def moderation(self, comment, parent):
+    def moderation(self, comment, parent) -> bool:
         """
         Delete the comment according to rule.
 
@@ -133,7 +114,7 @@ class OuijaPost(object):
             return True
         return False
 
-    def permalink(self, comment):
+    def permalink(self, comment: praw.models.reddit.comment) -> str:
         """Produce a shorter permalink"""
         return 'https://www.reddit.com/r/{}/comments/{}//{}'.format(
             self._post.subreddit.display_name, self._post.id, comment.id)
@@ -203,9 +184,9 @@ class OuijaPost(object):
 class Ouija(object):
     """Contain all bot logic."""
 
-    def __init__(self, subreddit):
+    def __init__(self, subreddit: str) -> None:
         """Initialize."""
-        reddit = Reddit(check_for_updates=False)
+        reddit = praw.Reddit(check_for_updates=False)
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
 
@@ -228,7 +209,6 @@ class Ouija(object):
                     if post.answer_score <= 1:
                         post.answer_text = None
                 post.change_flair()
-                #post.change_userflair()
 
     def open(self):
         """Open the subreddit to new submission"""
@@ -256,13 +236,13 @@ class Ouija(object):
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + ' '
         title = title + MESI[next_day.tm_mon]
         body = PROSSIMA_TESTO
-        unanswered = []
+        unanswered = []  # type: list[praw.models.reddit.submission]
         for submission in self.subreddit.new(limit=100):
             if OuijaPost(submission).is_unanswered():
                 unanswered.append(submission)
         if unanswered:
             body += PROSSIMA_APERTE
-            body += "\n".join(["* [{}]({})".format(s.title, s.permalink) for s in unanswered])
+            body += "\n".join(["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered])
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()

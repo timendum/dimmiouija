@@ -72,7 +72,7 @@ class Summarizer():
         with open(self.name + ".md", "w", encoding="utf-8") as fout:
             fout.write(text)
         # Disabled, Reddit returns an error
-        # self.subreddit.wiki[self.title].create(text, 'Pagina creata')
+        self.subreddit.wiki.create(self.name, text, 'Pagina creata')
 
     @staticmethod
     def make_stats(questions: List[Dict]) -> Dict[str, List[Tuple[str, int]]]:
@@ -260,6 +260,7 @@ class Summarizer():
         text += self._open_time(stats['open_time']) + '\n'
         with open(self.name + "_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
+        self.subreddit.wiki.create(self.name + "_stats", text, 'Pagina creata')
 
     @staticmethod
     def solutions(questions: List[Dict]) -> List[Tuple[str, str]]:

@@ -262,6 +262,7 @@ class Summarizer():
         with open(self.name + "_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
         self.subreddit.wiki.create(self.name + "_stats", text, 'Pagina creata')
+        self.add_wiki()
 
     @staticmethod
     def solutions(questions: List[Dict]) -> List[Tuple[str, str]]:

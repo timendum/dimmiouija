@@ -33,6 +33,7 @@ LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.NullHandler())
 LOGGER.setLevel(logging.INFO)
 
+
 class OuijaPost(object):
     """A post in ouija"""
 
@@ -44,9 +45,9 @@ class OuijaPost(object):
         else:
             self.author = None
         self.question = post.title
-        self.answer_text = None # type: str
+        self.answer_text = None  # type: str
         self.answer_score = float('-inf')
-        self.flair = None # type: str
+        self.flair = None  # type: str
         if post.link_flair_text and post.link_flair_text != UNANSWERED['text']:
             self.flair = post.link_flair_text
 
@@ -98,6 +99,7 @@ class OuijaPost(object):
 
         Return True if deleted, False otherwise.
         """
+
         def delete_thread(comment):
             """Delete comments and all children"""
             replies = comment.replies
@@ -162,7 +164,7 @@ class OuijaPost(object):
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         comment.mod.remove()
                         continue
-                    if  len(existing[body].replies) < 1:
+                    if len(existing[body].replies) < 1:
                         # the previous comment has not replies: delete it
                         LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         existing[body].mod.remove()

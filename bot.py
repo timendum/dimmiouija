@@ -4,6 +4,8 @@ import argparse
 import logging
 import re
 import time
+
+import grapheme
 import praw
 
 AGENT = 'python:dimmi-ouja:0.2 (by /u/timendum)'
@@ -152,7 +154,7 @@ class OuijaPost(object):
                 existing['GOODBYE'] = comment
                 # check if the new answer is an accepted one (and store the results)
                 found = found or self.accept_answer(comment)
-            elif len(body) == 1:
+            elif grapheme.length(body) == 1:
                 if existing.get(body):
                     # the letter is already insered
                     if comment.created > existing[body].created and len(comment.replies) < 1:

@@ -202,8 +202,8 @@ class Summarizer():
                 text=submission.title, url=submission.permalink, extra=round(question[1] / 60))
         text += '\n...\n\n'
         submission = self.reddit.submission(id=open_time[-1][0])
-        text += 'Ultimo: [{text}]({url})'.format(text=submission.title, url=submission.permalink)
-        text += '({})\n'.format(time_string(open_time[-1][1]))
+        text += 'Ultimo: [{text}]({url})  ({time})\n'.format(
+            text=submission.title, url=submission.permalink, time=time_string(open_time[-1][1]))
         # averange
         text += '\n### Statistiche\n\n'
         text += 'Le domande hanno dovuto attendere per una risposta mediamente {}  \n'.format(

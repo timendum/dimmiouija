@@ -1,4 +1,4 @@
-"""Produce a summery for AskOuija thread"""
+"""Manage a subreddit like AskOuija"""
 # pylint: disable=C0103
 import argparse
 import logging
@@ -184,6 +184,7 @@ class OuijaPost(object):
                 LOGGER.info("Deleting - length <> 1 - %s", self.permalink(comment))
                 comment.mod.remove()
         return found
+
 
 class PMList():
     """Manage a list of user to message"""

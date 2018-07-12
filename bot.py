@@ -8,7 +8,7 @@ import time
 import grapheme
 import praw
 
-AGENT = 'python:dimmi-ouja:0.2 (by /u/timendum)'
+AGENT = 'python:dimmi-ouja:0.3 (by /u/timendum)'
 
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
@@ -24,8 +24,9 @@ PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
 PROSSIMA_APERTE = "\n\nLe domande aperte ad ora sono:\n\n"
+APERTURA_TITOLO = "Sei stato convocato su DimmiOuija"
 PROSSIMA_COMMENTO = "Vuoi essere avvertito della prossima apertura? Rispondi a QUESTO commento."
-APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati.\n\nUn saluto."
+APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -184,6 +185,35 @@ class OuijaPost(object):
                 comment.mod.remove()
         return found
 
+class PMList():
+    """Manage a list of user to message"""
+
+    def __init__(self, reddit, subreddit) -> None:
+        self.reddit = reddit
+        self.wiki_main = subreddit.wiki['pmlist']
+        self.wiki_todo = subreddit.wiki['pmlist_todo']
+
+    def start(self):
+        """Prepare for a new start"""
+        self.wiki_todo.edit(self.wiki_main.content_md, reason='New opening')
+
+    def send_next(self):
+        """Send a new PM"""
+        users = self.wiki_todo.content_md.split('\n')
+        users = [user.strip() for user in users]
+        users = [user for user in users if user]
+        if not users:
+            return
+        user, users = users[0], users[1:]
+        self.wiki_todo.edit('\n\n'.join(users), reason='Done ' + user)
+        try:
+            self.reddit.redditor(user).message(APERTURA_TITOLO, APERTURA_COMMENTO)
+        except praw.exceptions.APIException as e:
+            if e.error_type == 'USER_DOESNT_EXIST':
+                self.wiki_main.subreddit.message(user, 'User not found')
+            else:
+                print(user, e)
+
 
 class Ouija(object):
     """Contain all bot logic."""
@@ -193,6 +223,7 @@ class Ouija(object):
         reddit = praw.Reddit(check_for_updates=False)
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
+        self.pmlist = PMList(reddit, self.subreddit)
 
     def check_submission(self):
         """Check the submission for unanswered post"""
@@ -213,6 +244,7 @@ class Ouija(object):
                     if post.answer_score <= 1:
                         post.answer_text = None
                 post.change_flair()
+        self.pmlist.send_next()
 
     def open(self):
         """Open the subreddit to new submission"""
@@ -231,6 +263,7 @@ class Ouija(object):
                     for comment in submission.comments:
                         comment.reply(APERTURA_COMMENTO)
                 break
+        self.pmlist.start()
 
     def close(self):
         """Close the subreddit to new submission"""

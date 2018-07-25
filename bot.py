@@ -8,7 +8,7 @@ import time
 import grapheme
 import praw
 
-AGENT = 'python:dimmi-ouja:0.3 (by /u/timendum)'
+AGENT = 'python:dimmi-ouja:0.3.1 (by /u/timendum)'
 
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
@@ -27,6 +27,8 @@ PROSSIMA_APERTE = "\n\nLe domande aperte ad ora sono:\n\n"
 APERTURA_TITOLO = "Sei stato convocato su DimmiOuija"
 PROSSIMA_COMMENTO = "Vuoi essere avvertito della prossima apertura? Rispondi a QUESTO commento."
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
+PM_ANSWER_TITLE = "GLI SPIRITI HANNO PARLATO"
+PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}"
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -63,7 +65,7 @@ class OuijaPost(object):
         return self._post.created_utc > YESTERDAY
 
     def change_flair(self):
-        """Flair the post based on answer_text"""
+        """Flair the post based on answer_text and send a PM"""
         if self.answer_text is None:
             if not self._post.link_flair_text:
                 self._post.mod.flair(UNANSWERED['text'], UNANSWERED['class'])
@@ -74,6 +76,11 @@ class OuijaPost(object):
                 text = text[0:61] + '...'
             if text != self.flair:
                 self._post.mod.flair(text, ANSWERED['class'])
+                if self._post.author:
+                    self._post.author.message(PM_ANSWER_TITLE,
+                                              PM_ANSWER_BODY.format(
+                                                  question=self._post.title,
+                                                  answer=self.answer_text))
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self) -> bool:
@@ -274,7 +281,7 @@ class Ouija(object):
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + ' '
         title = title + MESI[next_day.tm_mon]
         body = PROSSIMA_TESTO
-        unanswered = []  # type: list[praw.models.reddit.submission]
+        unanswered = []  # type: list[praw.models.reddit.Submission]
         for submission in self.subreddit.new(limit=100):
             if OuijaPost(submission).is_unanswered():
                 unanswered.append(submission)

@@ -34,7 +34,7 @@ Vuoi essere avvertito solo della prossima apertura?
 Rispondi a QUESTO commento."""
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
 PM_ANSWER_TITLE = "GLI SPIRITI HANNO PARLATO"
-PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}\n\n{permalink}"
+PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}\n\n{permalink}?context=10000"
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 

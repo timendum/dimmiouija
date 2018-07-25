@@ -25,7 +25,13 @@ PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
 PROSSIMA_APERTE = "\n\nLe domande aperte ad ora sono:\n\n"
 APERTURA_TITOLO = "Sei stato convocato su DimmiOuija"
-PROSSIMA_COMMENTO = "Vuoi essere avvertito della prossima apertura? Rispondi a QUESTO commento."
+PROSSIMA_COMMENTO = """**Novità**  
+Vuoi essere contattato ad OGNI apertura?  
+[Scrivici in modmail](https://www.reddit.com/message/compose?to=%2Fr%2FDimmiOuija&subject=Aggiungimi) 
+e sarai aggiunto alla lista.
+
+Vuoi essere avvertito solo della prossima apertura?
+Rispondi a QUESTO commento."""
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
 PM_ANSWER_TITLE = "GLI SPIRITI HANNO PARLATO"
 PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}"

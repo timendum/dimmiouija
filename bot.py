@@ -34,7 +34,7 @@ Vuoi essere avvertito solo della prossima apertura?
 Rispondi a QUESTO commento."""
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
 PM_ANSWER_TITLE = "GLI SPIRITI HANNO PARLATO"
-PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}"
+PM_ANSWER_BODY = "Hai chiesto:  \n>{question}\n\nGli spiriti dicono:  \n>{answer}\n\n{permalink}"
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -55,6 +55,7 @@ class OuijaPost(object):
             self.author = None
         self.question = post.title
         self.answer_text = None  # type: str
+        self.answer_permalink = None  # type: str
         self.answer_score = float('-inf')
         self.flair = None  # type: str
         if post.link_flair_text and post.link_flair_text != UNANSWERED['text']:
@@ -86,7 +87,8 @@ class OuijaPost(object):
                     self._post.author.message(PM_ANSWER_TITLE,
                                               PM_ANSWER_BODY.format(
                                                   question=self._post.title,
-                                                  answer=self.answer_text))
+                                                  answer=self.answer_text,
+                                                  permalink=self.answer_permalink))
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self) -> bool:
@@ -102,8 +104,9 @@ class OuijaPost(object):
         Return True if accepted, False otherwise.
         """
         if comment.score > self.answer_score:
-            self.answer_text = ''
+            self.answer_text = '' # remove previous text
             self.answer_score = comment.score
+            self.answer_permalink = comment.permalink
             return True
         return False
 

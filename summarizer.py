@@ -27,6 +27,8 @@ def find_solution(submission: Submission, solution: str) -> List[Comment]:
     for comment in submission.comments.list():
         if comment.removed:
             continue
+        if comment.distinguished:
+            continue
         if GOODBYE.match(comment.body.strip()):
             # solution candidate!
             tree = [comment]
@@ -64,7 +66,7 @@ class Summarizer():
     def __dates():
         today = datetime.date.today()
         day = today - datetime.timedelta(days=1)
-        return {'week': today.strftime('%Y_%W'), 'day': day.strftime(DATE_FORMAT)}
+        return {'week': datetime.date.today().strftime('%Y_%W'), 'day': day.strftime(DATE_FORMAT)}
 
     def write_answers(self, questions: List[Dict]) -> None:
         """Transfer parsed pages to subreddit wiki"""

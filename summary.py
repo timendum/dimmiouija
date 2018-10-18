@@ -69,9 +69,13 @@ class Summarizer():
 
     def load_infos(self) -> Dict:
         """Read variablies from JSON"""
-        with open('data/{}.json'.format(self.name), 'rt', encoding="utf-8") as fin:
-            questions = json.load(fin)
-        return questions
+        try:
+            with open('data/{}.json'.format(self.name), 'rt', encoding="utf-8") as fin:
+                questions = json.load(fin)
+            return questions
+        except FileNotFoundError:
+            pass
+        return None
 
     def write_answers(self, questions) -> None:
         """Transfer parsed pages to subreddit wiki"""
@@ -149,8 +153,8 @@ class Summarizer():
         text = template.render(**variables)
         with open('data/{}_stats.md'.format(self.name), 'wt', encoding="utf-8") as fout:
             fout.write(text)
-        #self.subreddit.wiki.create(self.name + "_stats", text, 'Pagina creata')
-        #self.add_wiki()
+        self.subreddit.wiki.create(self.name + "_stats", text, 'Pagina creata')
+        self.add_wiki()
         with open('data/{}_stats.json'.format(self.name), 'wt', encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
@@ -172,9 +176,12 @@ def main():
     """Perform all bot actions"""
     summary = Summarizer('DimmiOuija')
     questions = summary.load_infos()
+    if not questions:
+        print('ERROR - Data missing - Please run dump.py first')
+        return
     summary.write_answers(questions)
-    #stats = summary.make_stats(questions)
-    #summary.write_stats(questions, stats)
+    stats = summary.make_stats(questions)
+    summary.write_stats(questions, stats)
 
 
 if __name__ == "__main__":

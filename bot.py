@@ -10,11 +10,12 @@ import praw
 
 AGENT = 'python:dimmi-ouja:0.3.1 (by /u/timendum)'
 
+WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
+SCORE_LIMIT = 1
 GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
 UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
 ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
 MODPOST = {'text': 'DimmiOuija', 'class': 'DimmiOuija'}
-WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 MESI = [
     None, 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto',
     'settembre', 'ottobre', 'novembre', 'dicembre'
@@ -110,7 +111,7 @@ class OuijaPost(object):
         Return True if accepted, False otherwise.
         """
         if comment.score > self.answer_score:
-            self.answer_text = '' # remove previous text
+            self.answer_text = ''  # remove previous text
             self.answer_score = comment.score
             self.answer_permalink = comment.permalink
             return True
@@ -264,7 +265,7 @@ class Ouija(object):
             if post.is_unanswered():
                 answer = post.process()
                 if answer:
-                    if post.answer_score <= 1:
+                    if post.answer_score <= SCORE_LIMIT:
                         post.answer_text = None
                 post.change_flair()
         self.pmlist.send_next()

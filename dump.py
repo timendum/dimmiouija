@@ -28,7 +28,7 @@ def find_solution(submission: Submission, solution: str) -> List[Comment]:
             sol = ''
             while tree[0].parent() != submission:
                 tree = [tree[0].parent()] + tree
-                sol = tree[0].body.strip().upper() + sol
+                sol = tree[0].body.strip().lstrip('\\').upper() + sol
             if sol == solution:
                 return tree
     return None

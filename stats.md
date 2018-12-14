@@ -20,7 +20,7 @@ Le risposte più lunghe sono state:
 Le risposte più corte sono state: 
 {% for shorter in shorters %}
 1. [{{shorter.answer}}]({{shorter.permalink}}) ({{shorter.answer|length}})
-{% endfor %}
+{%- endfor %}
 {% else %}
 La risposta più corta ({{shorters[0].answer|length}} caratteri) è stata:
 {% for shorter in shorters %}[{{shorter.answer}}]({{shorter.permalink}}){% endfor %}

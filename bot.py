@@ -42,6 +42,7 @@ Gli spiriti dicono:
 > {answer}
 
 [Commenta qui]({permalink}?context=10000)"""
+DEEP_LINK_BODY = "[Prosegue qui]({permalink})\n\n^(Link per gli utenti da app)"
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -102,7 +103,7 @@ class OuijaPost(object):
         """Check for answers in the comments and delete wrong comments"""
         self._post.comment_sort = 'top'
         self._post.comments.replace_more(limit=None)
-        return self.find_answers(self._post)
+        return self.browse_comments(self._post, [self._post])
 
     def accept_answer(self, comment) -> bool:
         """
@@ -147,8 +148,31 @@ class OuijaPost(object):
         return 'https://www.reddit.com/r/{}/comments/{}//{}'.format(
             self._post.subreddit.display_name, self._post.id, comment.id)
 
-    def find_answers(self, parent):
-        """Given a comment return a list of open and closed replies"""
+    def deep_link(self, comment: praw.models.reddit.comment, parents) -> None:
+        """Reply if the comment needs a deep link for mobile users"""
+        if not len(parents) % 9 == 0:
+            # check only every 9th
+            return
+
+        has_children = False
+        for reply in comment.replies:
+            if reply.removed:
+                continue
+            if reply.distinguished and reply.body[:1] == '[':
+                # already commented on this
+                return
+            has_children = True
+
+        if not has_children:
+            # No valid reply
+            return
+
+        # Build the comment
+        bcomment = comment.reply(DEEP_LINK_BODY.format(permalink=comment.permalink))
+        bcomment.mod.distinguish()
+
+    def browse_comments(self, parent, superparents):
+        """Given a comment return True if an answer is found"""
         found = False
         existing = {}
         # try replies for parent=comment
@@ -196,7 +220,8 @@ class OuijaPost(object):
                         continue
                 # the letter is not already insered, save it
                 existing[body] = comment
-                if self.find_answers(comment):
+                self.deep_link(comment, superparents)
+                if self.browse_comments(comment, superparents + [parent]):
                     # compose the answer
                     self.answer_text = body + self.answer_text
                     # to uppercase

@@ -8,7 +8,7 @@ import time
 import grapheme
 import praw
 
-AGENT = 'python:dimmi-ouja:0.3.1 (by /u/timendum)'
+AGENT = 'python:dimmi-ouja:0.3.2 (by /u/timendum)'
 
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 SCORE_LIMIT = 1

@@ -180,7 +180,7 @@ class OuijaPost(object):
                 existing['GOODBYE'] = comment
                 # check if the new answer is an accepted one (and store the results)
                 found = found or self.accept_answer(comment)
-            elif grapheme.length(body) == 1:
+            elif len(body) == 1 or grapheme.length(body) == 1:
                 if existing.get(body):
                     # the letter is already insered
                     if comment.created > existing[body].created and len(comment.replies) < 1:

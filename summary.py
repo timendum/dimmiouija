@@ -2,6 +2,7 @@
 import datetime
 import json
 from collections import Counter
+from pathlib import Path
 from statistics import mean, mode, StatisticsError, median_grouped as median
 from typing import Dict, List, Tuple, Union, Any
 
@@ -56,26 +57,30 @@ class Summarizer():
     def __init__(self, subreddit: str) -> None:
         """Initialize."""
         reddit = praw.Reddit(check_for_updates=False)
-        dates = Summarizer.__dates()
+        self.name = None
+        self.fullname = None
         self.subreddit = reddit.subreddit(subreddit)
-        self.name = dates['week']
-        self.fullname = dates['day']
 
     @staticmethod
     def __dates() -> Dict['str', 'str']:
         today = datetime.date.today()
         day = today - datetime.timedelta(days=1)
-        return {'week': datetime.date.today().strftime('%Y_%W'), 'day': day.strftime(DATE_FORMAT)}
 
     def load_infos(self) -> Dict:
         """Read variablies from JSON"""
-        try:
-            with open('data/{}.json'.format(self.name), 'rt', encoding="utf-8") as fin:
-                questions = json.load(fin)
-            return questions
-        except FileNotFoundError:
-            pass
-        return None
+        # find most recent json file
+        ffilepaths = sorted(Path('./data').glob('[0-9][0-9][0-9][0-9]_[0-9][0-9].json'), reverse=True)
+        if not ffilepaths:
+            return None
+        ffilepath = ffilepaths[0]
+        if datetime.datetime.now().timestamp() - ffilepath.stat().st_mtime > 60 * 60 * 24 * 14:
+            # too old
+            return None
+        self.name = ffilepath.parts[-1].split('.')[0]
+        with ffilepath.open('rt', encoding="utf-8") as fin:
+            questions = json.load(fin)
+        self.fullname = datetime.datetime.fromtimestamp(questions[0]['created_utc']).strftime(DATE_FORMAT)
+        return questions
 
     def write_answers(self, questions) -> None:
         """Transfer parsed pages to subreddit wiki"""

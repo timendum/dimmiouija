@@ -105,7 +105,7 @@ class Dumper():
     @staticmethod
     def write_json(questions):
         """Write variablies to JSON"""
-        name = datetime.date.today().strftime('%Y_%W')
+        name = datetime.datetime.fromtimestamp(questions[0]['created_utc']).strftime('%Y_%W')
         with open('data/{}.json'.format(name), 'wt', encoding="utf-8") as fout:
             json.dump(questions, fout, indent=4)
 

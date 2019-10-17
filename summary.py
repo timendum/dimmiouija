@@ -175,6 +175,10 @@ class Summarizer():
             text=self.fullname, short=self.name, sub=self.subreddit.display_name) + wikitemplate[1]
         text = separator.join(wikitemplate)
         index.edit(text, self.fullname)
+        self.subreddit.sticky(2).reply("""Un riassunto delle domande e risposte
+è [disponibile sulla wiki](/r/{sub}/wiki/{short}),
+insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
+            short=self.name, sub=self.subreddit.display_name))
 
 
 def main():

@@ -8,19 +8,30 @@ import time
 import grapheme
 import praw
 
-AGENT = 'python:dimmi-ouja:0.3.2 (by /u/timendum)'
+AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 SCORE_LIMIT = 1
-GOODBYE = re.compile(r'^(?:Goodbye|Arrivederci|Addio)', re.IGNORECASE)
-UNANSWERED = {'text': 'Senza risposta', 'class': 'unanswered'}
-ANSWERED = {'text': 'Ouija dice: ', 'class': 'answered'}
-MODPOST = {'text': 'DimmiOuija', 'class': 'DimmiOuija'}
+GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
+UNANSWERED = {"text": "Senza risposta", "class": "unanswered"}
+ANSWERED = {"text": "Ouija dice: ", "class": "answered"}
+MODPOST = {"text": "DimmiOuija", "class": "DimmiOuija"}
 MESI = [
-    None, 'gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto',
-    'settembre', 'ottobre', 'novembre', 'dicembre'
+    None,
+    "gennaio",
+    "febbraio",
+    "marzo",
+    "aprile",
+    "maggio",
+    "giugno",
+    "luglio",
+    "agosto",
+    "settembre",
+    "ottobre",
+    "novembre",
+    "dicembre",
 ]
-PROSSIMA_TITOLO = 'Riapriamo il '
+PROSSIMA_TITOLO = "Riapriamo il "
 PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
@@ -64,16 +75,16 @@ class OuijaPost(object):
         self.question = post.title
         self.answer_text = None  # type: str
         self.answer_permalink = None  # type: str
-        self.answer_score = float('-inf')
+        self.answer_score = float("-inf")
         self.flair = None  # type: str
-        if post.link_flair_text and post.link_flair_text != UNANSWERED['text']:
+        if post.link_flair_text and post.link_flair_text != UNANSWERED["text"]:
             self.flair = post.link_flair_text
 
     def is_unanswered(self) -> bool:
         """Check if the submission is Unanswered"""
         if not self._post.link_flair_text:
             return True
-        return self._post.link_flair_css_class == UNANSWERED['class']
+        return self._post.link_flair_css_class == UNANSWERED["class"]
 
     def is_fresh(self) -> bool:
         """Check if the submission is younger then YESTERDAY"""
@@ -83,25 +94,33 @@ class OuijaPost(object):
         """Flair the post based on answer_text and send a PM"""
         if self.answer_text is None:
             if not self._post.link_flair_text:
-                self._post.mod.flair(UNANSWERED['text'], UNANSWERED['class'])
-                LOGGER.debug("Flair - UNANSWERED - https://www.reddit.com%s", self._post.permalink)
+                self._post.mod.flair(UNANSWERED["text"], UNANSWERED["class"])
+                LOGGER.debug(
+                    "Flair - UNANSWERED - https://www.reddit.com%s",
+                    self._post.permalink,
+                )
         else:
-            text = ANSWERED['text'] + self.answer_text
+            text = ANSWERED["text"] + self.answer_text
             if len(text) > 64:
-                text = text[0:61] + '...'
+                text = text[0:61] + "..."
             if text != self.flair:
-                self._post.mod.flair(text, ANSWERED['class'])
+                self._post.mod.flair(text, ANSWERED["class"])
                 if self._post.author:
-                    self._post.author.message(PM_ANSWER_TITLE,
-                                              PM_ANSWER_BODY.format(
-                                                  question=self._post.title,
-                                                  answer=self.answer_text,
-                                                  permalink=self.answer_permalink))
-                LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
+                    self._post.author.message(
+                        PM_ANSWER_TITLE,
+                        PM_ANSWER_BODY.format(
+                            question=self._post.title,
+                            answer=self.answer_text,
+                            permalink=self.answer_permalink,
+                        ),
+                    )
+                LOGGER.debug(
+                    "Flair - %s - https://www.reddit.com%s", text, self._post.permalink
+                )
 
     def process(self) -> bool:
         """Check for answers in the comments and delete wrong comments"""
-        self._post.comment_sort = 'top'
+        self._post.comment_sort = "top"
         self._post.comments.replace_more(limit=None)
         return self.browse_comments(self._post, [self._post])
 
@@ -112,7 +131,7 @@ class OuijaPost(object):
         Return True if accepted, False otherwise.
         """
         if comment.score > self.answer_score:
-            self.answer_text = ''  # remove previous text
+            self.answer_text = ""  # remove previous text
             self.answer_score = comment.score
             self.answer_permalink = comment.permalink
             return True
@@ -138,15 +157,18 @@ class OuijaPost(object):
             delete_thread(comment)
             return True
         if comment.author and comment.author.name == parent.author.name:
-            LOGGER.info("Deleting - parent = author - %s?context=1", self.permalink(comment))
+            LOGGER.info(
+                "Deleting - parent = author - %s?context=1", self.permalink(comment)
+            )
             delete_thread(comment)
             return True
         return False
 
     def permalink(self, comment: praw.models.reddit.comment) -> str:
         """Produce a shorter permalink"""
-        return 'https://www.reddit.com/r/{}/comments/{}//{}'.format(
-            self._post.subreddit.display_name, self._post.id, comment.id)
+        return "https://www.reddit.com/r/{}/comments/{}//{}".format(
+            self._post.subreddit.display_name, self._post.id, comment.id
+        )
 
     def deep_link(self, comment: praw.models.reddit.comment, parents) -> None:
         """Reply if the comment needs a deep link for mobile users"""
@@ -158,7 +180,7 @@ class OuijaPost(object):
         for reply in comment.replies:
             if reply.removed:
                 continue
-            if reply.distinguished and reply.body[:1] == '[':
+            if reply.distinguished and reply.body[:1] == "[":
                 # already commented on this
                 return
             has_children = True
@@ -193,28 +215,39 @@ class OuijaPost(object):
             if self.moderation(comment, parent):
                 continue
             # check body (remove space and escape chars)
-            body = comment.body.strip().lstrip('\\')
+            body = comment.body.strip().lstrip("\\")
             if GOODBYE.match(body):
-                if existing.get('GOODBYE'):
-                    if comment.score < existing['GOODBYE'].score or \
-                       comment.created > existing['GOODBYE'].created:
-                        LOGGER.info("Deleting - duplicated goodbye - %s", self.permalink(parent))
+                if existing.get("GOODBYE"):
+                    if (
+                        comment.score < existing["GOODBYE"].score
+                        or comment.created > existing["GOODBYE"].created
+                    ):
+                        LOGGER.info(
+                            "Deleting - duplicated goodbye - %s", self.permalink(parent)
+                        )
                         comment.mod.remove()
                         continue
-                existing['GOODBYE'] = comment
+                existing["GOODBYE"] = comment
                 # check if the new answer is an accepted one (and store the results)
                 found = found or self.accept_answer(comment)
             elif len(body) == 1 or grapheme.length(body) == 1:
                 if existing.get(body):
                     # the letter is already insered
-                    if comment.created > existing[body].created and len(comment.replies) < 1:
+                    if (
+                        comment.created > existing[body].created
+                        and len(comment.replies) < 1
+                    ):
                         # the new comment is newer and does not have replies: delete it
-                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
+                        LOGGER.info(
+                            "Deleting - duplicated - %s", self.permalink(parent)
+                        )
                         comment.mod.remove()
                         continue
                     if len(existing[body].replies) < 1:
                         # the previous comment has not replies: delete it
-                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
+                        LOGGER.info(
+                            "Deleting - duplicated - %s", self.permalink(parent)
+                        )
                         existing[body].mod.remove()
                         existing[body] = comment
                         continue
@@ -234,32 +267,32 @@ class OuijaPost(object):
         return found
 
 
-class PMList():
+class PMList:
     """Manage a list of user to message"""
 
     def __init__(self, reddit, subreddit) -> None:
         self.reddit = reddit
-        self.wiki_main = subreddit.wiki['pmlist']
-        self.wiki_todo = subreddit.wiki['pmlist_todo']
+        self.wiki_main = subreddit.wiki["pmlist"]
+        self.wiki_todo = subreddit.wiki["pmlist_todo"]
 
     def start(self):
         """Prepare for a new start"""
-        self.wiki_todo.edit(self.wiki_main.content_md, reason='New opening')
+        self.wiki_todo.edit(self.wiki_main.content_md, reason="New opening")
 
     def send_next(self):
         """Send a new PM"""
-        users = self.wiki_todo.content_md.split('\n')
+        users = self.wiki_todo.content_md.split("\n")
         users = [user.strip() for user in users]
         users = [user for user in users if user]
         if not users:
             return
         user, users = users[0], users[1:]
-        self.wiki_todo.edit('\n\n'.join(users), reason='Done ' + user)
+        self.wiki_todo.edit("\n\n".join(users), reason="Done " + user)
         try:
             self.reddit.redditor(user).message(APERTURA_TITOLO, APERTURA_COMMENTO)
         except praw.exceptions.APIException as e:
-            if e.error_type == 'USER_DOESNT_EXIST':
-                self.wiki_main.subreddit.message(user, 'User not found')
+            if e.error_type == "USER_DOESNT_EXIST":
+                self.wiki_main.subreddit.message(user, "User not found")
             else:
                 print(user, e)
 
@@ -280,11 +313,11 @@ class Ouija(object):
         for submission in submissions:
             if submission.distinguished:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST['text'], MODPOST['class'])
+                    submission.mod.flair(MODPOST["text"], MODPOST["class"])
                 continue
             if submission.stickied:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST['text'], MODPOST['class'])
+                    submission.mod.flair(MODPOST["text"], MODPOST["class"])
                 continue
             post = OuijaPost(submission)
             if post.is_unanswered():
@@ -297,8 +330,10 @@ class Ouija(object):
 
     def open(self):
         """Open the subreddit to new submission"""
-        self.subreddit.mod.update(subreddit_type='public')
-        LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
+        self.subreddit.mod.update(subreddit_type="public")
+        LOGGER.info(
+            "Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name
+        )
         for submission in self.subreddit.hot():
             if submission.author == self.me and submission.distinguished:
                 # submission is the PROSSIMA_TITOLO
@@ -316,10 +351,10 @@ class Ouija(object):
 
     def close(self):
         """Close the subreddit to new submission"""
-        self.subreddit.mod.update(subreddit_type='restricted')
+        self.subreddit.mod.update(subreddit_type="restricted")
         LOGGER.info("Subreddit chiuso")
         next_day = time.localtime(time.time() + WAIT_NEXT)
-        title = PROSSIMA_TITOLO + str(next_day.tm_mday) + ' '
+        title = PROSSIMA_TITOLO + str(next_day.tm_mday) + " "
         title = title + MESI[next_day.tm_mon]
         body = PROSSIMA_TESTO
         unanswered = []  # type: list[praw.models.reddit.Submission]
@@ -328,7 +363,9 @@ class Ouija(object):
                 unanswered.append(submission)
         if unanswered:
             body += PROSSIMA_APERTE
-            body += "\n".join(["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered])
+            body += "\n".join(
+                ["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered]
+            )
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()
@@ -338,20 +375,21 @@ class Ouija(object):
 
 def main():
     """Perform a bot action"""
-    parser = argparse.ArgumentParser(description='Activate mod bot on /r/DimmiOuija ')
+    parser = argparse.ArgumentParser(description="Activate mod bot on /r/DimmiOuija ")
     parser.add_argument(
-        'action',
-        choices=['check', 'open', 'close'],
-        default='check',
-        help='The action to perform (default: %(default)s)')
+        "action",
+        choices=["check", "open", "close"],
+        default="check",
+        help="The action to perform (default: %(default)s)",
+    )
     args = parser.parse_args()
 
-    bot = Ouija('DimmiOuija')
-    if args.action == 'check':
+    bot = Ouija("DimmiOuija")
+    if args.action == "check":
         bot.check_submission()
-    elif args.action == 'open':
+    elif args.action == "open":
         bot.open()
-    elif args.action == 'close':
+    elif args.action == "close":
         bot.close()
 
 

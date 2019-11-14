@@ -53,7 +53,7 @@ Gli spiriti dicono:
 > {answer}
 
 [Commenta qui]({permalink}?context=10000)"""
-DEEP_LINK_BODY = "[Prosegue qui]({permalink})\n\n^(Link per gli utenti da app)"
+TEXT_WIKI_CAFFE = "Oggi è aperto /r/DimmiOuija, dove si possono fare domande e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -170,29 +170,6 @@ class OuijaPost(object):
             self._post.subreddit.display_name, self._post.id, comment.id
         )
 
-    def deep_link(self, comment: praw.models.reddit.comment, parents) -> None:
-        """Reply if the comment needs a deep link for mobile users"""
-        if not len(parents) % 9 == 0:
-            # check only every 9th
-            return
-
-        has_children = False
-        for reply in comment.replies:
-            if reply.removed:
-                continue
-            if reply.distinguished and reply.body[:1] == "[":
-                # already commented on this
-                return
-            has_children = True
-
-        if not has_children:
-            # No valid reply
-            return
-
-        # Build the comment
-        bcomment = comment.reply(DEEP_LINK_BODY.format(permalink=comment.permalink))
-        bcomment.mod.distinguish()
-
     def browse_comments(self, parent, superparents):
         """Given a comment return True if an answer is found"""
         found = False
@@ -253,7 +230,6 @@ class OuijaPost(object):
                         continue
                 # the letter is not already insered, save it
                 existing[body] = comment
-                self.deep_link(comment, superparents)
                 if self.browse_comments(comment, superparents + [parent]):
                     # compose the answer
                     self.answer_text = body + self.answer_text
@@ -301,8 +277,12 @@ class Ouija(object):
     """Contain all bot logic."""
 
     def __init__(self, subreddit: str) -> None:
-        """Initialize."""
+        """Initialize.
+        
+        subreddit = DimmiOuija subreddit
+        """
         reddit = praw.Reddit(check_for_updates=False)
+        self._reddit = reddit
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
         self.pmlist = PMList(reddit, self.subreddit)
@@ -328,7 +308,7 @@ class Ouija(object):
                 post.change_flair()
         self.pmlist.send_next()
 
-    def open(self):
+    def open(self, swcaffe: str = None):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type="public")
         LOGGER.info(
@@ -348,6 +328,13 @@ class Ouija(object):
                         comment.reply(APERTURA_COMMENTO)
                 break
         self.pmlist.start()
+        # Update ambrogio_caffe
+        if swcaffe:
+            wiki_caffe = self._reddit.subreddit(swcaffe).wiki["ambrogio_caffe"]
+            content_md = wiki_caffe.content_md.replace("\r", "").replace(
+                "[](/oggi-start)\n", "[](/oggi-start)\n\n* {}".format(TEXT_WIKI_CAFFE)
+            )
+            wiki_caffe.edit(content_md, "DimmiOuija apertura")
 
     def close(self):
         """Close the subreddit to new submission"""
@@ -388,7 +375,7 @@ def main():
     if args.action == "check":
         bot.check_submission()
     elif args.action == "open":
-        bot.open()
+        bot.open("italy")
     elif args.action == "close":
         bot.close()
 

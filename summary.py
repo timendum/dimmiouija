@@ -57,6 +57,7 @@ class Summarizer:
     def __init__(self, subreddit: str) -> None:
         """Initialize."""
         reddit = praw.Reddit(check_for_updates=False)
+        self._reddit = reddit
         self.name = None
         self.fullname = None
         self.subreddit = reddit.subreddit(subreddit)
@@ -211,6 +212,24 @@ insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
             )
         )
 
+    def caffe_wiki(self, swcaffe: str = None):
+        wiki_caffe = self._reddit.subreddit(swcaffe).wiki["ambrogio_caffe"]
+        lines = wiki_caffe.content_md.replace("\r", "").split("\n")
+        section = False
+        for i, line in enumerate(lines):
+            if "[](/ieri-start)" in line:
+                section = True
+                continue
+            if "[](/ieri-end)" in line:
+                break
+            if section and self.subreddit.display_name in line:
+                line = "* Oggi abbiamo agiocato su r/DimmiOuija, è disponibile un [riassunto](/r/{sub}/wiki/{short}) e le [statistiche](/r/{sub}/wiki/{short}_stats) relative".format(
+                    short=self.name, sub=self.subreddit.display_name
+                )
+                lines[i] = line
+                break
+        wiki_caffe.edit("\n".join(lines), "DimmiOuija chiusura")
+
 
 def main():
     """Perform all bot actions"""
@@ -222,6 +241,7 @@ def main():
     summary.write_answers(questions)
     stats = summary.make_stats(questions)
     summary.write_stats(questions, stats)
+    summary.caffe_wiki("italy")
 
 
 if __name__ == "__main__":

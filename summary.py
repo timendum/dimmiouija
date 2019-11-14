@@ -62,11 +62,6 @@ class Summarizer:
         self.fullname = None
         self.subreddit = reddit.subreddit(subreddit)
 
-    @staticmethod
-    def __dates() -> Dict["str", "str"]:
-        today = datetime.date.today()
-        day = today - datetime.timedelta(days=1)
-
     def load_infos(self) -> Dict:
         """Read variablies from JSON"""
         # find most recent json file

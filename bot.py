@@ -11,7 +11,7 @@ import praw
 AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
-SCORE_LIMIT = 1
+SCORE_LIMIT = 0
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
 UNANSWERED = {"text": "Senza risposta", "class": "unanswered"}
 ANSWERED = {"text": "Ouija dice: ", "class": "answered"}
@@ -318,6 +318,7 @@ class Ouija(object):
             if submission.author == self.me and submission.distinguished:
                 # submission is the PROSSIMA_TITOLO
                 submission.mod.sticky(state=False)
+                submission.replace_more(limit=None)
                 for comment in submission.comments:
                     if comment.distinguished:
                         for to_notify in comment.replies:

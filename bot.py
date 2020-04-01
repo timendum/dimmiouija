@@ -37,8 +37,7 @@ PROSSIMA_TESTO = """Qui potete commentare i risultati di questo giro.
 Nel frattempo non sarà possibile porre nuove domande, solo concludere quelle già aperte."""
 PROSSIMA_APERTE = "\n\nLe domande aperte ad ora sono:\n\n"
 APERTURA_TITOLO = "Sei stato convocato su DimmiOuija"
-PROSSIMA_COMMENTO = """**Novità**  
-Vuoi essere contattato ad OGNI apertura?  
+PROSSIMA_COMMENTO = """Vuoi essere contattato ad OGNI apertura?  
 [Scrivici in modmail](https://www.reddit.com/message/compose?to=%2Fr%2FDimmiOuija&subject=Aggiungimi) 
 e sarai aggiunto alla lista.
 
@@ -358,7 +357,7 @@ class Ouija(object):
         submission.mod.sticky()
         submission.mod.distinguish()
         comment = submission.reply(PROSSIMA_COMMENTO)
-        comment.mod.distinguish()
+        comment.mod.distinguish(sticky=True)
 
 
 def main():

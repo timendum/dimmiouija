@@ -317,7 +317,7 @@ class Ouija(object):
             if submission.author == self.me and submission.distinguished:
                 # submission is the PROSSIMA_TITOLO
                 submission.mod.sticky(state=False)
-                submission.replace_more(limit=None)
+                submission.comments.replace_more(limit=None)
                 for comment in submission.comments:
                     if comment.distinguished:
                         for to_notify in comment.replies:

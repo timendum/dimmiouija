@@ -13,9 +13,9 @@ AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 SCORE_LIMIT = 1
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
-UNANSWERED = {"text": "Senza risposta", "class": "unanswered"}
-ANSWERED = {"text": "Ouija dice: ", "class": "answered"}
-MODPOST = {"text": "DimmiOuija", "class": "DimmiOuija"}
+UNANSWERED = {"text": "Senza risposta", "css_class": "unanswered", "flair_template_id": "c08164be-2cf7-11e8-82fd-0e9dcb216a98"}
+ANSWERED = {"text": "Ouija dice: ", "css_class": "answered", "flair_template_id": "456a526e-8c01-11e7-bb65-0ed09cec4484"}
+MODPOST = {"text": "DimmiOuija", "css_class": "DimmiOuija"}
 MESI = [
     None,
     "gennaio",
@@ -83,7 +83,7 @@ class OuijaPost(object):
         """Check if the submission is Unanswered"""
         if not self._post.link_flair_text:
             return True
-        return self._post.link_flair_css_class == UNANSWERED["class"]
+        return self._post.link_flair_css_class == UNANSWERED["css_class"]
 
     def is_fresh(self) -> bool:
         """Check if the submission is younger then YESTERDAY"""
@@ -93,7 +93,7 @@ class OuijaPost(object):
         """Flair the post based on answer_text and send a PM"""
         if self.answer_text is None:
             if not self._post.link_flair_text:
-                self._post.mod.flair(UNANSWERED["text"], UNANSWERED["class"])
+                self._post.mod.flair(**UNANSWERED)
                 LOGGER.debug(
                     "Flair - UNANSWERED - https://www.reddit.com%s",
                     self._post.permalink,
@@ -103,7 +103,7 @@ class OuijaPost(object):
             if len(text) > 64:
                 text = text[0:61] + "..."
             if text != self.flair:
-                self._post.mod.flair(text, ANSWERED["class"])
+                self._post.mod.flair(text, css_class=ANSWERED["css_class"], flair_template_id=ANSWERED["flair_template_id"])
                 if self._post.author:
                     self._post.author.message(
                         PM_ANSWER_TITLE,
@@ -292,11 +292,11 @@ class Ouija(object):
         for submission in submissions:
             if submission.distinguished:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST["text"], MODPOST["class"])
+                    submission.mod.flair(MODPOST["text"], MODPOST["css_class"])
                 continue
             if submission.stickied:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST["text"], MODPOST["class"])
+                    submission.mod.flair(MODPOST["text"], MODPOST["css_class"])
                 continue
             post = OuijaPost(submission)
             if post.is_unanswered():

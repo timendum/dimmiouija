@@ -58,9 +58,8 @@ class Summarizer:
         """Initialize."""
         reddit = praw.Reddit(check_for_updates=False)
         self._reddit = reddit
-        self.name = None
-        self.fullname = None
         self.subreddit = reddit.subreddit(subreddit)
+        self.load_infos()
 
     def load_infos(self) -> Dict:
         """Read variablies from JSON"""
@@ -69,11 +68,11 @@ class Summarizer:
             Path("./data").glob("[0-9][0-9][0-9][0-9]_[0-9][0-9].json"), reverse=True
         )
         if not ffilepaths:
-            return None
+            raise ValueError("No data.json found")
         ffilepath = ffilepaths[0]
         if datetime.datetime.now().timestamp() - ffilepath.stat().st_mtime > 60 * 60 * 24 * 14:
             # too old
-            return None
+            raise ValueError("No recent data.json found")
         self.name = ffilepath.parts[-1].split(".")[0]
         with ffilepath.open("rt", encoding="utf-8") as fin:
             questions = json.load(fin)
@@ -205,7 +204,9 @@ insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
             if "[](/ieri-end)" in line:
                 break
             if section and self.subreddit.display_name in line:
-                line = "* Oggi abbiamo agiocato su r/DimmiOuija, è disponibile un [riassunto](/r/{sub}/wiki/{short}) e le [statistiche](/r/{sub}/wiki/{short}_stats) relative".format(
+                line = """* Oggi abbiamo agiocato su r/DimmiOuija,
+è disponibile un [riassunto](/r/{sub}/wiki/{short})
+e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
                     short=self.name, sub=self.subreddit.display_name
                 )
                 lines[i] = line

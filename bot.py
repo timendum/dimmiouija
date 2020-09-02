@@ -4,6 +4,7 @@ import argparse
 import logging
 import re
 import time
+from typing import Optional
 
 import grapheme
 import praw
@@ -50,7 +51,7 @@ PROSSIMA_COMMENTO = """Vuoi essere contattato ad OGNI apertura?
 e sarai aggiunto alla lista.
 
 Vuoi essere avvertito solo della prossima apertura?
-Rispondi a QUESTO commento."""
+Rispondi a QUESTO commento."""  # noqa
 APERTURA_COMMENTO = "Ciao,  \ngli spiriti sono arrivati r/DimmiOuija.\n\nUn saluto."
 PM_ANSWER_TITLE = "GLI SPIRITI HANNO PARLATO"
 PM_ANSWER_BODY = """Hai chiesto:  
@@ -59,8 +60,11 @@ PM_ANSWER_BODY = """Hai chiesto:
 Gli spiriti dicono:  
 > {answer}
 
-[Commenta qui]({permalink}?context=10000)"""
-TEXT_WIKI_CAFFE = "Oggi è aperto /r/DimmiOuija, dove si possono fare domande e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
+[Commenta qui]({permalink}?context=100)"""  # noqa
+TEXT_WIKI_CAFFE = (
+    "Oggi è aperto /r/DimmiOuija, dove si possono fare domande "
+    + "e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
+)
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
 
@@ -80,10 +84,10 @@ class OuijaPost(object):
         else:
             self.author = None
         self.question = post.title
-        self.answer_text = None  # type: str
-        self.answer_permalink = None  # type: str
+        self.answer_text = None  # type: Optional[str]
+        self.answer_permalink = None  # type: Optional[str]
         self.answer_score = float("-inf")
-        self.flair = None  # type: str
+        self.flair = None  # type: Optional[str]
         if post.link_flair_text and post.link_flair_text != UNANSWERED["text"]:
             self.flair = post.link_flair_text
 

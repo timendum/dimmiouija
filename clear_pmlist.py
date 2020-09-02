@@ -40,9 +40,7 @@ class Cleaner:
                 removed_users.append(user)
         LOGGER.info("Saved: %s", saved_users)
         LOGGER.info("Removed: %s", removed_users)
-        self.wiki_main.edit(
-            "\n\n".join(saved_users), reason="Removed " + ", ".join(removed_users)
-        )
+        self.wiki_main.edit("\n\n".join(saved_users), reason="Removed " + ", ".join(removed_users))
 
     def check_user(self, user):
         """Check if user is mod or is active"""

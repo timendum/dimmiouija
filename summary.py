@@ -71,18 +71,15 @@ class Summarizer:
         if not ffilepaths:
             return None
         ffilepath = ffilepaths[0]
-        if (
-            datetime.datetime.now().timestamp() - ffilepath.stat().st_mtime
-            > 60 * 60 * 24 * 14
-        ):
+        if datetime.datetime.now().timestamp() - ffilepath.stat().st_mtime > 60 * 60 * 24 * 14:
             # too old
             return None
         self.name = ffilepath.parts[-1].split(".")[0]
         with ffilepath.open("rt", encoding="utf-8") as fin:
             questions = json.load(fin)
-        self.fullname = datetime.datetime.fromtimestamp(
-            questions[0]["created_utc"]
-        ).strftime(DATE_FORMAT)
+        self.fullname = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime(
+            DATE_FORMAT
+        )
         return questions
 
     def write_answers(self, questions) -> None:
@@ -99,15 +96,9 @@ class Summarizer:
         """Return statistics of parsed questions with answer"""
         authors = Counter([question["author"] for question in questions])
         solvers = Counter(
-            [
-                comment["author"]
-                for question in questions
-                for comment in question["comments"][0:-1]
-            ]
+            [comment["author"] for question in questions for comment in question["comments"][0:-1]]
         )
-        goodbyers = Counter(
-            [question["comments"][-1]["author"] for question in questions]
-        )
+        goodbyers = Counter([question["comments"][-1]["author"] for question in questions])
         chars = Counter(
             [
                 comment["body"].strip().upper()
@@ -178,9 +169,7 @@ class Summarizer:
             fout.write(text)
         self.subreddit.wiki.create(self.name + "_stats", text, "Pagina creata")
         self.add_wiki()
-        with open(
-            "data/{}_stats.json".format(self.name), "wt", encoding="utf-8"
-        ) as fout:
+        with open("data/{}_stats.json".format(self.name), "wt", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
     def add_wiki(self):
@@ -192,9 +181,7 @@ class Summarizer:
 
 ### [{text}](/r/{sub}/wiki/{short}) - [Statistiche](/r/{sub}/wiki/{short}_stats)"""
         wikitemplate[1] = (
-            new_row.format(
-                text=self.fullname, short=self.name, sub=self.subreddit.display_name
-            )
+            new_row.format(text=self.fullname, short=self.name, sub=self.subreddit.display_name)
             + wikitemplate[1]
         )
         text = separator.join(wikitemplate)

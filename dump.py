@@ -15,7 +15,7 @@ GOODBYE = bot.GOODBYE
 
 def find_solution(submission: Submission, solution: str) -> List[Comment]:
     """Given a submission and the solution,
-       RETURNS the list of comment, in order, including the Goodbye"""
+    RETURNS the list of comment, in order, including the Goodbye"""
     submission.comments.replace_more(limit=None)
     for comment in submission.comments.list():
         if comment.removed:
@@ -108,9 +108,7 @@ class Dumper:
     @staticmethod
     def write_json(questions):
         """Write variablies to JSON"""
-        name = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime(
-            "%Y_%W"
-        )
+        name = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime("%Y_%W")
         with open("data/{}.json".format(name), "wt", encoding="utf-8") as fout:
             json.dump(questions, fout, indent=4)
 

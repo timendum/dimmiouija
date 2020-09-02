@@ -13,8 +13,16 @@ AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
 SCORE_LIMIT = 1
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
-UNANSWERED = {"text": "Senza risposta", "css_class": "unanswered", "flair_template_id": "c08164be-2cf7-11e8-82fd-0e9dcb216a98"}
-ANSWERED = {"text": "Ouija dice: ", "css_class": "answered", "flair_template_id": "456a526e-8c01-11e7-bb65-0ed09cec4484"}
+UNANSWERED = {
+    "text": "Senza risposta",
+    "css_class": "unanswered",
+    "flair_template_id": "c08164be-2cf7-11e8-82fd-0e9dcb216a98",
+}
+ANSWERED = {
+    "text": "Ouija dice: ",
+    "css_class": "answered",
+    "flair_template_id": "456a526e-8c01-11e7-bb65-0ed09cec4484",
+}
 MODPOST = {"text": "DimmiOuija", "css_class": "DimmiOuija"}
 MESI = [
     None,
@@ -103,7 +111,11 @@ class OuijaPost(object):
             if len(text) > 64:
                 text = text[0:61] + "..."
             if text != self.flair:
-                self._post.mod.flair(text, css_class=ANSWERED["css_class"], flair_template_id=ANSWERED["flair_template_id"])
+                self._post.mod.flair(
+                    text,
+                    css_class=ANSWERED["css_class"],
+                    flair_template_id=ANSWERED["flair_template_id"],
+                )
                 if self._post.author:
                     self._post.author.message(
                         PM_ANSWER_TITLE,
@@ -113,9 +125,7 @@ class OuijaPost(object):
                             permalink=self.answer_permalink,
                         ),
                     )
-                LOGGER.debug(
-                    "Flair - %s - https://www.reddit.com%s", text, self._post.permalink
-                )
+                LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self) -> bool:
         """Check for answers in the comments and delete wrong comments"""
@@ -156,9 +166,7 @@ class OuijaPost(object):
             delete_thread(comment)
             return True
         if comment.author and comment.author.name == parent.author.name:
-            LOGGER.info(
-                "Deleting - parent = author - %s?context=1", self.permalink(comment)
-            )
+            LOGGER.info("Deleting - parent = author - %s?context=1", self.permalink(comment))
             delete_thread(comment)
             return True
         return False
@@ -198,9 +206,7 @@ class OuijaPost(object):
                         comment.score < existing["GOODBYE"].score
                         or comment.created > existing["GOODBYE"].created
                     ):
-                        LOGGER.info(
-                            "Deleting - duplicated goodbye - %s", self.permalink(parent)
-                        )
+                        LOGGER.info("Deleting - duplicated goodbye - %s", self.permalink(parent))
                         comment.mod.remove()
                         continue
                 existing["GOODBYE"] = comment
@@ -209,21 +215,14 @@ class OuijaPost(object):
             elif len(body) == 1 or grapheme.length(body) == 1:
                 if existing.get(body):
                     # the letter is already insered
-                    if (
-                        comment.created > existing[body].created
-                        and len(comment.replies) < 1
-                    ):
+                    if comment.created > existing[body].created and len(comment.replies) < 1:
                         # the new comment is newer and does not have replies: delete it
-                        LOGGER.info(
-                            "Deleting - duplicated - %s", self.permalink(parent)
-                        )
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         comment.mod.remove()
                         continue
                     if len(existing[body].replies) < 1:
                         # the previous comment has not replies: delete it
-                        LOGGER.info(
-                            "Deleting - duplicated - %s", self.permalink(parent)
-                        )
+                        LOGGER.info("Deleting - duplicated - %s", self.permalink(parent))
                         existing[body].mod.remove()
                         existing[body] = comment
                         continue
@@ -277,7 +276,7 @@ class Ouija(object):
 
     def __init__(self, subreddit: str) -> None:
         """Initialize.
-        
+
         subreddit = DimmiOuija subreddit
         """
         reddit = praw.Reddit(check_for_updates=False)
@@ -310,9 +309,7 @@ class Ouija(object):
     def open(self, swcaffe: str = None):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(subreddit_type="public")
-        LOGGER.info(
-            "Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name
-        )
+        LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
         for submission in self.subreddit.hot():
             if submission.author == self.me and submission.distinguished:
                 # submission is the PROSSIMA_TITOLO
@@ -350,9 +347,7 @@ class Ouija(object):
                 unanswered.append(submission)
         if unanswered:
             body += PROSSIMA_APERTE
-            body += "\n".join(
-                ["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered]
-            )
+            body += "\n".join(["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered])
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()

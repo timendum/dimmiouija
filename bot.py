@@ -181,7 +181,7 @@ class OuijaPost(object):
             self._post.subreddit.display_name, self._post.id, comment.id
         )
 
-    def browse_comments(self, parent, superparents):
+    def browse_comments(self, parent, superparents):  # noqa: C901
         """Given a comment return True if an answer is found"""
         found = False
         existing = {}

@@ -312,7 +312,7 @@ class Ouija(object):
 
     def open(self, swcaffe: str = None):
         """Open the subreddit to new submission"""
-        self.subreddit.mod.update(subreddit_type="public")
+        self.subreddit.mod.update(type="public")
         LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
         for submission in self.subreddit.hot():
             if submission.author == self.me and submission.distinguished:
@@ -339,7 +339,7 @@ class Ouija(object):
 
     def close(self):
         """Close the subreddit to new submission"""
-        self.subreddit.mod.update(subreddit_type="restricted")
+        self.subreddit.mod.update(type="restricted")
         LOGGER.info("Subreddit chiuso")
         next_day = time.localtime(time.time() + WAIT_NEXT)
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + " "

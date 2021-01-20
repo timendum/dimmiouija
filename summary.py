@@ -214,6 +214,21 @@ e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
         wiki_caffe.edit("\n".join(lines), "DimmiOuija chiusura")
 
 
+def load_all():
+    ffilepaths = Path("./data").glob("[0-9][0-9][0-9][0-9]_[0-9][0-9].json")
+    if not ffilepaths:
+        raise ValueError("No data.json found")
+
+    plays = []
+    for ffilepath in ffilepaths:
+        try:
+            with ffilepath.open("rt", encoding="utf-8") as fin:
+                plays.extend(json.load(fin))
+        except json.decoder.JSONDecodeError as e:
+            print(e, ffilepath)
+    return plays
+
+
 def main():
     """Perform all bot actions"""
     summary = Summarizer("DimmiOuija")

@@ -30,9 +30,10 @@ def main(permalink: str) -> None:
         if refresh_counter % 9 == 0:
             ancestor.refresh()
         refresh_counter += 1
+    print("Label: " + "".join([c.body for c in reversed(tree[1:])]) + " " + tree[0].body)
     randomized = random.sample(tree, k=len(tree))
     for i, c in enumerate(randomized):
-        print("{}. https://www.reddit/com{}?context=1000".format(i + 1, c.permalink))
+        print("{}. https://www.reddit.com{}?context=1000".format(i + 1, c.permalink))
 
 
 if __name__ == "__main__":

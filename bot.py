@@ -269,8 +269,10 @@ class PMList:
         try:
             self.reddit.redditor(user).message(APERTURA_TITOLO, APERTURA_COMMENTO)
         except praw.exceptions.APIException as e:
-            if e.error_type == "USER_DOESNT_EXIST":
-                self.wiki_main.subreddit.message(user, "User not found")
+            for subexception in e.items:
+                if subexception.error_type == "USER_DOESNT_EXIST":
+                    self.wiki_main.subreddit.message(user, "User not found")
+                    break
             else:
                 print(user, e)
 

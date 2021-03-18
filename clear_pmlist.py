@@ -24,9 +24,20 @@ class Cleaner:
         self.subreddit = subreddit
         self.wiki_main = rsubreddit.wiki["pmlist"]
         self.mods = [moderator.name for moderator in rsubreddit.moderator()]
-        self.time_limit = time.time() - MAX_AGE
+        LOGGER.info("Mods: %s", self.mods)
+        self._fetch_authors(rsubreddit)
 
-    def start(self):
+    def _fetch_authors(self, rsubreddit) -> None:
+        time_limit = time.time() - MAX_AGE
+        LOGGER.info("Retrieved comments")
+        comments = list(rsubreddit.comments(limit=None))
+        LOGGER.info("Retrieved %d comments", len(comments))
+        comments = [comment for comment in comments if comment.created >= time_limit]
+        LOGGER.info("Remaining %d comments", len(comments))
+        self.authors = set([comment.author.name for comment in comments if comment.author])
+        LOGGER.info("Found %d authors", len(self.authors))
+
+    def start(self) -> None:
         """Parse and clear the list"""
         users = self.wiki_main.content_md.split("\n")
         users = [user.strip() for user in users]
@@ -34,30 +45,15 @@ class Cleaner:
         saved_users = []
         removed_users = []
         for user in users:
-            if self.check_user(user):
+            if user in self.authors:
+                saved_users.append(user)
+            elif user in self.mods:
                 saved_users.append(user)
             else:
                 removed_users.append(user)
         LOGGER.info("Saved: %s", saved_users)
         LOGGER.info("Removed: %s", removed_users)
-        self.wiki_main.edit("\n\n".join(saved_users), reason="Removed " + ", ".join(removed_users))
-
-    def check_user(self, user):
-        """Check if user is mod or is active"""
-        if user in self.mods:
-            LOGGER.info("%s: mod", user)
-            return True
-        user = self.reddit.redditor(user)
-        comments = 0
-        for comment in user.comments.new(limit=None):
-            if comment.created < self.time_limit:
-                break
-            if comment.subreddit.display_name == self.subreddit:
-                comments += 1
-                if comments >= OK_LIMIT:
-                    break
-        LOGGER.info("%s: %d", user.name, comments)
-        return comments >= OK_LIMIT
+        self.wiki_main.edit("\n\n".join(saved_users), reason="Clean up")
 
 
 def main():

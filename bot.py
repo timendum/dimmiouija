@@ -11,7 +11,7 @@ import praw
 
 AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
-WAIT_NEXT = 60 * 60 * 24 * 14  # 14 days
+WAIT_NEXT = 60 * 60 * (24 * 13 + 12)   # 13 days + 12 hours, for daylight saving
 SCORE_LIMIT = 1
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
 UNANSWERED = {

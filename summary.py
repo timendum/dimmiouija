@@ -204,7 +204,7 @@ insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
             if "[](/ieri-end)" in line:
                 break
             if section and self.subreddit.display_name in line:
-                line = """* Oggi abbiamo agiocato su r/DimmiOuija,
+                line = """* Ieri abbiamo giocato su r/DimmiOuija,
 è disponibile un [riassunto](/r/{sub}/wiki/{short})
 e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
                     short=self.name, sub=self.subreddit.display_name

@@ -11,8 +11,8 @@ import praw
 
 AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
-WAIT_NEXT = 60 * 60 * (24 * 13 + 12)   # 13 days + 12 hours, for daylight saving
-SCORE_LIMIT = 3 # comment score must be >=
+WAIT_NEXT = 60 * 60 * (24 * 13 + 12)  # 13 days + 12 hours, for daylight saving
+SCORE_LIMIT = 3  # comment score must be >=
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
 UNANSWERED = {
     "text": "Senza risposta",
@@ -24,7 +24,11 @@ ANSWERED = {
     "css_class": "answered",
     "flair_template_id": "456a526e-8c01-11e7-bb65-0ed09cec4484",
 }
-MODPOST = {"text": "DimmiOuija", "css_class": "DimmiOuija"}
+MODPOST = {
+    "text": "DimmiOuija",
+    "css_class": "DimmiOuija",
+    "flair_template_id": "4341ba2c-8c01-11e7-93f7-0e091235c204",
+}
 MESI = [
     None,
     "gennaio",
@@ -297,11 +301,11 @@ class Ouija(object):
         for submission in submissions:
             if submission.distinguished:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST["text"], MODPOST["css_class"])
+                    submission.mod.flair(**MODPOST)
                 continue
             if submission.stickied:
                 if not submission.link_flair_text:
-                    submission.mod.flair(MODPOST["text"], MODPOST["css_class"])
+                    submission.mod.flair(**MODPOST)
                 continue
             post = OuijaPost(submission)
             if post.is_unanswered():

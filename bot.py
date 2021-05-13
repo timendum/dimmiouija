@@ -12,7 +12,7 @@ import praw
 AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
 WAIT_NEXT = 60 * 60 * (24 * 13 + 12)   # 13 days + 12 hours, for daylight saving
-SCORE_LIMIT = 1
+SCORE_LIMIT = 3 # comment score must be >=
 GOODBYE = re.compile(r"^(?:Goodbye|Arrivederci|Addio)", re.IGNORECASE)
 UNANSWERED = {
     "text": "Senza risposta",
@@ -307,8 +307,11 @@ class Ouija(object):
             if post.is_unanswered():
                 answer = post.process()
                 if answer:
-                    if post.answer_score <= SCORE_LIMIT:
+                    if post.answer_score < SCORE_LIMIT:
+                        # revert accept_answer
                         post.answer_text = None
+                        post.answer_score = float("-inf")
+                        post.answer_permalink = None
                 post.change_flair()
         self.pmlist.send_next()
 

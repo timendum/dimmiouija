@@ -125,14 +125,17 @@ class OuijaPost(object):
                     flair_template_id=ANSWERED["flair_template_id"],
                 )
                 if self._post.author:
-                    self._post.author.message(
-                        PM_ANSWER_TITLE,
-                        PM_ANSWER_BODY.format(
-                            question=self._post.title,
-                            answer=self.answer_text,
-                            permalink=self.answer_permalink,
-                        ),
-                    )
+                    try:
+                        self._post.author.message(
+                            PM_ANSWER_TITLE,
+                            PM_ANSWER_BODY.format(
+                                question=self._post.title,
+                                answer=self.answer_text,
+                                permalink=self.answer_permalink,
+                            ),
+                        )
+                    except praw.exceptions.RedditAPIException:
+                        LOGGER.exception("Error sending PM to %s", self._post.author.name)
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)
 
     def process(self) -> bool:

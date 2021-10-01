@@ -1,11 +1,13 @@
 """Summarize a brief period of DimmiOuija activity"""
 import datetime
 import json
-from typing import Dict, List
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 import praw
-from praw.models.reddit.comment import Comment
-from praw.models.reddit.submission import Submission
+
+if TYPE_CHECKING:
+    from praw.models.reddit.comment import Comment
+    from praw.models.reddit.submission import Submission
 
 import bot
 
@@ -13,7 +15,7 @@ ANSWERED_FLAIR = bot.ANSWERED["text"]
 GOODBYE = bot.GOODBYE
 
 
-def find_solution(submission: Submission, solution: str) -> List[Comment]:
+def find_solution(submission: Submission, solution: str) -> Optional[List[Comment]]:
     """Given a submission and the solution,
     RETURNS the list of comment, in order, including the Goodbye"""
     submission.comments.replace_more(limit=None)
@@ -30,6 +32,33 @@ def find_solution(submission: Submission, solution: str) -> List[Comment]:
                 tree = [tree[0].parent()] + tree
                 sol = tree[0].body.strip().lstrip("\\").upper() + sol
             if sol == solution:
+                return tree
+    # Solution not found, include deleted
+    for comment in submission.comments.list():
+        if comment.removed:
+            continue
+        if comment.distinguished:
+            continue
+        if GOODBYE.match(comment.body.strip()):
+            # solution candidate!
+            tree = [comment]
+            sol = ""
+            while tree[0].parent() != submission:
+                tree = [tree[0].parent()] + tree
+                if tree[0].body == "[deleted]" and solution[-len(sol) :] == sol:
+                    # comment is deleted and the solution so far is good
+                    sol = solution[-len(sol) - 1] + sol
+                elif tree[0].body == "[deleted]" and len(sol) == 0:
+                    # comment is deleted and solution is empty
+                    sol = solution[-1]
+                else:
+                    sol = tree[0].body.strip().lstrip("\\").upper() + sol
+            if sol == solution:
+                # tree is ok
+                for i, c in enumerate(tree):
+                    if c.body == "[deleted]":
+                        # overwrite body
+                        c.__dict__["body"] = solution[i]
                 return tree
     return None
 

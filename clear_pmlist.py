@@ -33,7 +33,7 @@ class Cleaner:
         comments = list(rsubreddit.comments(limit=None))
         LOGGER.info("Retrieved %d comments", len(comments))
         comments = [comment for comment in comments if comment.created >= time_limit]
-        LOGGER.info("Remaining %d comments", len(comments))
+        LOGGER.info("Valid comments: %d", len(comments))
         self.authors = set([comment.author.name for comment in comments if comment.author])
         LOGGER.info("Found %d authors", len(self.authors))
 
@@ -51,8 +51,8 @@ class Cleaner:
                 saved_users.append(user)
             else:
                 removed_users.append(user)
-        LOGGER.info("Saved: %s", saved_users)
-        LOGGER.info("Removed: %s", removed_users)
+        LOGGER.info("Saved: %s", ', '.join(saved_users))
+        LOGGER.info("Removed: %s", ', '.join(removed_users))
         self.wiki_main.edit("\n\n".join(saved_users), reason="Clean up")
 
 

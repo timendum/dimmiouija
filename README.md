@@ -23,7 +23,7 @@ The bot is also capable of creating summary pages on subreddit wiki.
 
 ## License
 
-Copyright (c) 2020 Timendum
+Copyright (c) 2022 Timendum
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

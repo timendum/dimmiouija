@@ -18,6 +18,7 @@ DimmiOuija bot is a reddit bot that manages /r/DimmiOuija subreddit
 
 The bot is also capable of creating summary pages on subreddit wiki.
 
+1. run ```sqlite3 data/dump.sqlite3 -init init_dump.sql ".exit"``` to inizialize sqlite database
 1. run ```python dump.py``` to create a JSON snapshot
 1. run ```python summary.py``` to create the new page and update index
 

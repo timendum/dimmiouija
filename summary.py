@@ -217,7 +217,7 @@ e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
 def load_all():
     ffilepaths = Path("./data").glob("[0-9][0-9][0-9][0-9]_[0-9][0-9].json")
     if not ffilepaths:
-        raise ValueError("No data.json found")
+        raise ValueError("No data/*.json found")
 
     plays = []
     for ffilepath in ffilepaths:
@@ -227,6 +227,26 @@ def load_all():
         except json.decoder.JSONDecodeError as e:
             print(e, ffilepath)
     return plays
+
+
+def sql_all():
+    from dump import Dumper
+
+    ffilepaths = Path("./data").glob("[0-9][0-9][0-9][0-9]_[0-9][0-9].json")
+    if not ffilepaths:
+        raise ValueError("No data/*.json found")
+
+    summary = Dumper("DimmiOuija")
+    questions = []
+    for ffilepath in ffilepaths:
+        try:
+            with ffilepath.open("rt", encoding="utf-8") as fin:
+                questions = json.load(fin)
+        except json.decoder.JSONDecodeError as e:
+            print(e, ffilepath)
+        summary._update_week(questions)
+        summary.to_sql(questions)
+        print("ok", ffilepath, len(questions))
 
 
 def main():

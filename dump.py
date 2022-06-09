@@ -1,7 +1,9 @@
 """Summarize a brief period of DimmiOuija activity"""
 from __future__ import annotations
+
 import datetime
 import json
+import sqlite3
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 import praw
@@ -65,7 +67,7 @@ def find_solution(submission: Submission, solution: str) -> Optional[List[Commen
 
 
 def author(content: praw.models.reddit.mixins.UserContentMixin) -> str:
-    """Extract author from """
+    """Extract author from"""
     if content.author:
         return content.author.name
     return "[deleted]"
@@ -78,6 +80,8 @@ class Dumper:
         """Initialize."""
         reddit = praw.Reddit(check_for_updates=False)
         self.subreddit = reddit.subreddit(subreddit)
+        self._con = sqlite3.connect("data/dump.sqlite3")
+        self.week: Optional[str] = None
 
     def get_questions(self) -> List[Dict]:
         """Check the hot submission of answered posts"""
@@ -109,7 +113,11 @@ class Dumper:
             if not submission.link_flair_text.startswith(ANSWERED_FLAIR):
                 continue
             parse_submission(submission)
+            self._update_week(questions)
         return questions
+
+    def _update_week(self, questions):
+        self.week = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime("%Y_%W")
 
     @staticmethod
     def add_threads(questions) -> None:
@@ -135,12 +143,53 @@ class Dumper:
                 question["comments"] = [parse_comment(comment) for comment in comments]
             del question["_thread"]
 
-    @staticmethod
-    def write_json(questions):
+    def write_json(self, questions):
         """Write variablies to JSON"""
-        name = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime("%Y_%W")
-        with open("data/{}.json".format(name), "wt", encoding="utf-8") as fout:
+        with open("data/{}.json".format(self.week), "wt", encoding="utf-8") as fout:
             json.dump(questions, fout, indent=4)
+
+    def to_sql(self, questions) -> None:
+        """Write variablies to Sqlite file"""
+        cur = self._con.cursor()
+        cur.executemany(
+            """insert into questions(
+            id,
+            title,
+            score,
+            created_utc,
+            author,
+            permalink,
+            answer,
+            week) values (?, ?, ?, ?, ?, ?, ?, ?)""",
+            [
+                (
+                    q["name"],
+                    q["title"],
+                    q["score"],
+                    int(q["created_utc"]),
+                    q["author"],
+                    q["permalink"],
+                    q["answer"],
+                    self.week,
+                )
+                for q in questions
+            ],
+        )
+        cur.executemany(
+            """insert into comments(
+            id,
+            parent_id,
+            body,
+            created_utc,
+            author,
+            score) values (?, ?, ?, ?, ?, ?)""",
+            [
+                (c["name"], q["name"], c["body"], int(c["created_utc"]), c["author"], c["score"])
+                for q in questions
+                for c in q["comments"]
+            ],
+        )
+        self._con.commit()
 
 
 def main():
@@ -148,6 +197,7 @@ def main():
     summary = Dumper("DimmiOuija")
     questions = summary.get_questions()
     summary.add_threads(questions)
+    summary.to_sql(questions)
     summary.write_json(questions)
 
 

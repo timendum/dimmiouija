@@ -71,13 +71,14 @@ TEXT_WIKI_CAFFE = (
 )
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
+OLD = time.time() - (TIME_LIMIT / 2)
 
 LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.NullHandler())
 LOGGER.setLevel(logging.INFO)
 
 
-class OuijaPost(object):
+class OuijaPost:
     """A post in ouija"""
 
     def __init__(self, post) -> None:
@@ -104,6 +105,10 @@ class OuijaPost(object):
     def is_fresh(self) -> bool:
         """Check if the submission is younger then YESTERDAY"""
         return self._post.created_utc > YESTERDAY
+
+    def is_old(self) -> bool:
+        """Check if the submission waited too much for an answer"""
+        return self._post.created_utc > OLD
 
     def change_flair(self):
         """Flair the post based on answer_text and send a PM"""
@@ -314,7 +319,11 @@ class Ouija(object):
             if post.is_unanswered():
                 answer = post.process()
                 if answer:
-                    if post.answer_score < SCORE_LIMIT:
+                    # check if the answer score is under the limit
+                    # but not if post is old and the answer score is above lower limit
+                    if post.answer_score < SCORE_LIMIT and not (
+                        post.is_old() and post.answer_score >= SCORE_LIMIT - 1
+                    ):
                         # revert accept_answer
                         post.answer_text = None
                         post.answer_score = float("-inf")

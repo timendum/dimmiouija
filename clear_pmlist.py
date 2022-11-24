@@ -29,11 +29,11 @@ class Cleaner:
 
     def _fetch_authors(self, rsubreddit) -> None:
         time_limit = time.time() - MAX_AGE
-        LOGGER.info("Retrieved comments")
+        LOGGER.info("Retrieving comments...")
         comments = list(rsubreddit.comments(limit=None))
         LOGGER.info("Retrieved %d comments", len(comments))
         comments = [comment for comment in comments if comment.created >= time_limit]
-        LOGGER.info("Valid (before %s) comments: %d", (time_limit, len(comments)))
+        LOGGER.info("Valid (%d days) comments: %d", (MAX_AGE/60/60/24, len(comments)))
         self.authors = set([comment.author.name for comment in comments if comment.author])
         LOGGER.info("Found %d authors", len(self.authors))
 

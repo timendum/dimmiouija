@@ -9,7 +9,7 @@ import praw
 AGENT = "python:dimmi-ouja:0.3.2 (by /u/timendum)"
 
 OK_LIMIT = 2
-MAX_AGE = 60 * 60 * 24 * 14 * 4  # 4 editions
+MAX_AGE = 60 * 60 * 24 * 14 * 6  # 6 editions
 LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.StreamHandler(sys.stdout))
 LOGGER.setLevel(logging.INFO)
@@ -33,7 +33,7 @@ class Cleaner:
         comments = list(rsubreddit.comments(limit=None))
         LOGGER.info("Retrieved %d comments", len(comments))
         comments = [comment for comment in comments if comment.created >= time_limit]
-        LOGGER.info("Valid comments: %d", len(comments))
+        LOGGER.info("Valid (before %s) comments: %d", (time_limit, len(comments)))
         self.authors = set([comment.author.name for comment in comments if comment.author])
         LOGGER.info("Found %d authors", len(self.authors))
 

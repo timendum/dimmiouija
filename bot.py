@@ -4,7 +4,6 @@ import argparse
 import logging
 import re
 import time
-from typing import Optional
 
 import grapheme
 import praw
@@ -89,10 +88,10 @@ class OuijaPost:
         else:
             self.author = None
         self.question = post.title
-        self.answer_text = None  # type: Optional[str]
-        self.answer_permalink = None  # type: Optional[str]
+        self.answer_text = None  # type: str | None
+        self.answer_permalink = None  # type: str | None
         self.answer_score = float("-inf")
-        self.flair = None  # type: Optional[str]
+        self.flair = None  # type: str | None
         if post.link_flair_text and post.link_flair_text != UNANSWERED["text"]:
             self.flair = post.link_flair_text
 
@@ -289,7 +288,7 @@ class PMList:
                 print(user, e)
 
 
-class Ouija(object):
+class Ouija:
     """Contain all bot logic."""
 
     def __init__(self, subreddit: str) -> None:
@@ -331,7 +330,7 @@ class Ouija(object):
                 post.change_flair()
         self.pmlist.send_next()
 
-    def open(self, swcaffe: str = None):
+    def open(self, swcaffe: str | None = None):
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(type="public")
         LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
@@ -354,7 +353,7 @@ class Ouija(object):
         if swcaffe:
             wiki_caffe = self._reddit.subreddit(swcaffe).wiki["ambrogio_caffe"]
             content_md = wiki_caffe.content_md.replace("\r", "").replace(
-                "[](/oggi-start)\n", "[](/oggi-start)\n\n* {}".format(TEXT_WIKI_CAFFE)
+                "[](/oggi-start)\n", f"[](/oggi-start)\n\n* {TEXT_WIKI_CAFFE}"
             )
             wiki_caffe.edit(content_md, "DimmiOuija apertura")
 
@@ -372,7 +371,7 @@ class Ouija(object):
                 unanswered.append(submission)
         if unanswered:
             body += PROSSIMA_APERTE
-            body += "\n".join(["* [{}]({})".format(sub.title, sub.permalink) for sub in unanswered])
+            body += "\n".join([f"* [{sub.title}]({sub.permalink})" for sub in unanswered])
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
         submission.mod.sticky()
         submission.mod.distinguish()

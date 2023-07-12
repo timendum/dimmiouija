@@ -3,16 +3,17 @@ import datetime
 import json
 from collections import Counter
 from pathlib import Path
-from statistics import mean, mode, StatisticsError, median_grouped as median
-from typing import Dict, List, Tuple, Union, Any
+from statistics import StatisticsError, mean, mode
+from statistics import median_grouped as median
+from typing import Any
 
 import praw
-from jinja2 import FileSystemLoader, Environment
+from jinja2 import Environment, FileSystemLoader
 
 DATE_FORMAT = "%d/%m/%Y"
 
 
-def top_counter(count: Counter, size: int) -> List[Tuple[Any, int]]:
+def top_counter(count: Counter, size: int) -> list[tuple[Any, int]]:
     """Return at least 'size' most common, return more in case of same value elements"""
     sorted_values = sorted(count.values(), reverse=True)
     value_limit = sorted_values[size]
@@ -20,7 +21,7 @@ def top_counter(count: Counter, size: int) -> List[Tuple[Any, int]]:
     return count.most_common(real_size)
 
 
-def bottom_counter(count: Counter) -> List[Tuple[Any, int]]:
+def bottom_counter(count: Counter) -> list[tuple[Any, int]]:
     """Return the least common elements"""
     sorted_values = sorted(count.values())
     value_limit = sorted(count.values())[0]
@@ -28,7 +29,7 @@ def bottom_counter(count: Counter) -> List[Tuple[Any, int]]:
     return count.most_common()[real_size:]
 
 
-def top_answer(questions: Dict, size: int):
+def top_answer(questions: dict, size: int):
     """Return at least 'size' most common, return more in case of same value elements"""
     solutions = sorted(questions, key=lambda item: len(item["answer"]), reverse=True)
     limit = len(solutions[size]["answer"])
@@ -36,7 +37,7 @@ def top_answer(questions: Dict, size: int):
     return longers
 
 
-def bottom_answer(questions: Dict):
+def bottom_answer(questions: dict):
     """Return the least common elements"""
     solutions = sorted(questions, key=lambda item: len(item["answer"]))
     limit = len(solutions[0]["answer"])
@@ -44,11 +45,11 @@ def bottom_answer(questions: Dict):
     return shorters
 
 
-def time_string(open_time: Union[float, int]) -> str:
+def time_string(open_time: float | int) -> str:
     """It converts Numeric seconds to italian string"""
     if open_time < 60 * 60 * 2:
-        return "{:d} minuti".format(round(open_time / 60))
-    return "{:d} ore".format(round(open_time / 60 / 60))
+        return f"{round(open_time / 60):d} minuti"
+    return f"{round(open_time / 60 / 60):d} ore"
 
 
 class Summarizer:
@@ -61,7 +62,7 @@ class Summarizer:
         self.subreddit = reddit.subreddit(subreddit)
         self.load_infos()
 
-    def load_infos(self) -> Dict:
+    def load_infos(self) -> dict:
         """Read variablies from JSON"""
         # find most recent json file
         ffilepaths = sorted(
@@ -86,7 +87,7 @@ class Summarizer:
         env = Environment(loader=FileSystemLoader("."))
         template = env.get_template("wiki.md")
         text = template.render(day=self.fullname, questions=questions)
-        with open("data/{}.md".format(self.name), "w", encoding="utf-8") as fout:
+        with open(f"data/{self.name}.md", "w", encoding="utf-8") as fout:
             fout.write(text)
         self.subreddit.wiki.create(self.name, text, "Pagina creata")
 
@@ -164,11 +165,11 @@ class Summarizer:
         env.filters["bottom_answer"] = bottom_answer
         template = env.get_template("stats.md")
         text = template.render(**variables)
-        with open("data/{}_stats.md".format(self.name), "wt", encoding="utf-8") as fout:
+        with open(f"data/{self.name}_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
         self.subreddit.wiki.create(self.name + "_stats", text, "Pagina creata")
         self.add_wiki()
-        with open("data/{}_stats.json".format(self.name), "wt", encoding="utf-8") as fout:
+        with open(f"data/{self.name}_stats.json", "w", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
     def add_wiki(self):
@@ -193,7 +194,7 @@ insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
             )
         )
 
-    def caffe_wiki(self, swcaffe: str = None):
+    def caffe_wiki(self, swcaffe: str | None = None):
         wiki_caffe = self._reddit.subreddit(swcaffe).wiki["ambrogio_caffe"]
         lines = wiki_caffe.content_md.replace("\r", "").split("\n")
         section = False

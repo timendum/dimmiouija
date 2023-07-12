@@ -4,7 +4,7 @@ from __future__ import annotations
 import datetime
 import json
 import sqlite3
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import praw
 
@@ -18,7 +18,7 @@ ANSWERED_FLAIR = bot.ANSWERED["text"]
 GOODBYE = bot.GOODBYE
 
 
-def find_solution(submission: Submission, solution: str) -> Optional[List[Comment]]:
+def find_solution(submission: Submission, solution: str) -> list[Comment] | None:
     """Given a submission and the solution,
     RETURNS the list of comment, in order, including the Goodbye"""
     submission.comments.replace_more(limit=None)
@@ -81,12 +81,12 @@ class Dumper:
         reddit = praw.Reddit(check_for_updates=False)
         self.subreddit = reddit.subreddit(subreddit)
         self._con = sqlite3.connect("data/dump.sqlite3")
-        self.week: Optional[str] = None
+        self.week: str | None = None
 
-    def get_questions(self) -> List[Dict]:
+    def get_questions(self) -> list[dict]:
         """Check the hot submission of answered posts"""
         submissions = self.subreddit.top(time_filter="week", limit=None)
-        questions = []  # type: List[Dict]
+        questions = []  # type: list[dict]
 
         def parse_submission(submission: Submission) -> None:
             """Add the submission to text"""
@@ -123,7 +123,7 @@ class Dumper:
     def add_threads(questions) -> None:
         """Add comments section to questions"""
 
-        def parse_comment(comment: Comment) -> Dict:
+        def parse_comment(comment: Comment) -> dict:
             """Add the submission to text"""
             params = {
                 "body": comment.body,
@@ -145,7 +145,7 @@ class Dumper:
 
     def write_json(self, questions):
         """Write variablies to JSON"""
-        with open("data/{}.json".format(self.week), "wt", encoding="utf-8") as fout:
+        with open(f"data/{self.week}.json", "w", encoding="utf-8") as fout:
             json.dump(questions, fout, indent=4)
 
     def to_sql(self, questions) -> None:

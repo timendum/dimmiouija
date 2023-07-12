@@ -297,7 +297,7 @@ class Ouija(object):
 
         subreddit = DimmiOuija subreddit
         """
-        reddit = praw.Reddit(check_for_updates=False)
+        reddit = praw.Reddit(check_for_updates=False, client_secret=None)
         self._reddit = reddit
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)

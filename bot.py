@@ -354,7 +354,7 @@ class Ouija:
             content_md = wiki_caffe.content_md.replace("\r", "").replace(
                 "[](/oggi-start)\n", f"[](/oggi-start)\n\n* {TEXT_WIKI_CAFFE}"
             )
-            wiki_caffe.edit(content_md, "DimmiOuija apertura")
+            wiki_caffe.edit(content=content_md, reason="DimmiOuija apertura")
 
     def close(self):
         """Close the subreddit to new submission"""

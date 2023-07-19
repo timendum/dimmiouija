@@ -167,7 +167,7 @@ class Summarizer:
         text = template.render(**variables)
         with open(f"data/{self.name}_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki.create(self.name + "_stats", text, "Pagina creata")
+        self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
         self.add_wiki()
         with open(f"data/{self.name}_stats.json", "w", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
@@ -185,9 +185,9 @@ class Summarizer:
             + wikitemplate[1]
         )
         text = separator.join(wikitemplate)
-        index.edit(text, self.fullname)
+        index.edit(content=text, reason=self.fullname)
         self.subreddit.sticky(1).reply(
-            """Un riassunto delle domande e risposte
+            body="""Un riassunto delle domande e risposte
 è [disponibile sulla wiki](/r/{sub}/wiki/{short}),
 insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
                 short=self.name, sub=self.subreddit.display_name
@@ -212,7 +212,7 @@ e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
                 )
                 lines[i] = line
                 break
-        wiki_caffe.edit("\n".join(lines), "DimmiOuija chiusura")
+        wiki_caffe.edit(content="\n".join(lines), reason="DimmiOuija chiusura")
 
 
 def load_all():

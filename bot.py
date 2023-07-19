@@ -123,7 +123,7 @@ class OuijaPost:
                 text = text[0:61] + "..."
             if text != self.flair:
                 self._post.mod.flair(
-                    text,
+                    text=text,
                     css_class=ANSWERED["css_class"],
                     flair_template_id=ANSWERED["flair_template_id"],
                 )

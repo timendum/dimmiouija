@@ -80,13 +80,12 @@ LOGGER.setLevel(logging.INFO)
 class OuijaPost:
     """A post in ouija"""
 
-    def __init__(self, post) -> None:
+    def __init__(self, post: "praw.reddit.models.Submission") -> None:
         """Initialize."""
         self._post = post
+        self.author = None # type: "praw.reddit.models.Redditor" | None
         if post.author:
             self.author = post.author.name
-        else:
-            self.author = None
         self.question = post.title
         self.answer_text = None  # type: str | None
         self.answer_permalink = None  # type: str | None
@@ -148,7 +147,7 @@ class OuijaPost:
         self._post.comments.replace_more(limit=None)
         return self.browse_comments(self._post, [self._post])
 
-    def accept_answer(self, comment) -> bool:
+    def accept_answer(self, comment: "praw.reddit.models.Comment") -> bool:
         """
         Check if the comment contain a better answer.
 
@@ -161,7 +160,7 @@ class OuijaPost:
             return True
         return False
 
-    def moderation(self, comment, parent) -> bool:
+    def moderation(self, comment: "praw.reddit.models.Comment", parent) -> bool:
         """
         Delete the comment according to rule.
 
@@ -259,14 +258,14 @@ class OuijaPost:
 class PMList:
     """Manage a list of user to message"""
 
-    def __init__(self, reddit, subreddit) -> None:
+    def __init__(self, reddit: "praw.Reddit", subreddit: "praw.reddit.models.Subreddit") -> None:
         self.reddit = reddit
         self.wiki_main = subreddit.wiki["pmlist"]
         self.wiki_todo = subreddit.wiki["pmlist_todo"]
 
     def start(self):
         """Prepare for a new start"""
-        self.wiki_todo.edit(self.wiki_main.content_md, reason="New opening")
+        self.wiki_todo.edit(content=self.wiki_main.content_md, reason="New opening")
 
     def send_next(self):
         """Send a new PM"""

@@ -83,7 +83,7 @@ class OuijaPost:
     def __init__(self, post: "praw.reddit.models.Submission") -> None:
         """Initialize."""
         self._post = post
-        self.author = None # type: "praw.reddit.models.Redditor" | None
+        self.author = None  # type: "praw.reddit.models.Redditor" | None
         if post.author:
             self.author = post.author.name
         self.question = post.title
@@ -400,3 +400,28 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+def auth():
+    reddit = praw.Reddit(check_for_updates=False, client_secret=None)
+    print(
+        reddit.auth.url(
+            scopes=[
+                "modmail",
+                "modconfig",
+                "wikiedit",
+                "submit",
+                "modposts",
+                "modflair",
+                "read",
+                "privatemessages",
+                "identity",
+                "wikiread",
+                "edit",
+                "modwiki",
+                "flair",
+            ],
+            state="do",
+        )
+    )
+    code = input("Code: ")
+    reddit.auth.authorize(code=code)

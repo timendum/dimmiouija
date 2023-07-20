@@ -89,7 +89,7 @@ class Summarizer:
         text = template.render(day=self.fullname, questions=questions)
         with open(f"data/{self.name}.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki.create(self.name, text, "Pagina creata")
+        self.subreddit.wiki.create(name=self.name, content=text, reason="Pagina creata")
 
     @staticmethod
     def make_stats(questions):
@@ -186,7 +186,7 @@ class Summarizer:
         )
         text = separator.join(wikitemplate)
         index.edit(content=text, reason=self.fullname)
-        self.subreddit.sticky(1).reply(
+        self.subreddit.sticky(number=1).reply(
             body="""Un riassunto delle domande e risposte
 è [disponibile sulla wiki](/r/{sub}/wiki/{short}),
 insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(

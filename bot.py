@@ -130,8 +130,8 @@ class OuijaPost:
                 if self._post.author:
                     try:
                         self._post.author.message(
-                            PM_ANSWER_TITLE,
-                            PM_ANSWER_BODY.format(
+                            subject=PM_ANSWER_TITLE,
+                            message=PM_ANSWER_BODY.format(
                                 question=self._post.title,
                                 answer=self.answer_text,
                                 permalink=self.answer_permalink,
@@ -400,6 +400,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 def auth():
     reddit = praw.Reddit(check_for_updates=False, client_secret=None)

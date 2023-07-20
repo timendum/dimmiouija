@@ -57,7 +57,7 @@ class Summarizer:
 
     def __init__(self, subreddit: str) -> None:
         """Initialize."""
-        reddit = praw.Reddit(check_for_updates=False)
+        reddit = praw.Reddit(check_for_updates=False, client_secret=None)
         self._reddit = reddit
         self.subreddit = reddit.subreddit(subreddit)
         self.load_infos()

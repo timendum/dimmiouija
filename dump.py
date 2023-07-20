@@ -78,7 +78,7 @@ class Dumper:
 
     def __init__(self, subreddit: str) -> None:
         """Initialize."""
-        reddit = praw.Reddit(check_for_updates=False)
+        reddit = praw.Reddit(check_for_updates=False, client_secret=None)
         self.subreddit = reddit.subreddit(subreddit)
         self._con = sqlite3.connect("data/dump.sqlite3")
         self.week: str | None = None

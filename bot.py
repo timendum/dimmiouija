@@ -275,9 +275,9 @@ class PMList:
         if not users:
             return
         user, users = users[0], users[1:]
-        self.wiki_todo.edit("\n\n".join(users), reason="Done " + user)
+        self.wiki_todo.edit(content="\n\n".join(users), reason="Done " + user)
         try:
-            self.reddit.redditor(user).message(APERTURA_TITOLO, APERTURA_COMMENTO)
+            self.reddit.redditor(user).message(subject=APERTURA_TITOLO, message=APERTURA_COMMENTO)
         except praw.exceptions.APIException as e:
             for subexception in e.items:
                 if subexception.error_type == "USER_DOESNT_EXIST":

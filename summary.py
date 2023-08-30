@@ -187,11 +187,9 @@ class Summarizer:
         text = separator.join(wikitemplate)
         index.edit(content=text, reason=self.fullname)
         self.subreddit.sticky(number=1).reply(
-            body="""Un riassunto delle domande e risposte
-è [disponibile sulla wiki](/r/{sub}/wiki/{short}),
-insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
-                short=self.name, sub=self.subreddit.display_name
-            )
+            body=f"""Un riassunto delle domande e risposte
+è [disponibile sulla wiki](/r/{self.subreddit.display_name}/wiki/{self.name}),
+insieme alle [statistiche](/r/{self.subreddit.display_name}/wiki/{self.name}_stats) relative."""
         )
 
     def caffe_wiki(self, swcaffe: str | None = None):
@@ -205,11 +203,9 @@ insieme alle [statistiche](/r/{sub}/wiki/{short}_stats) relative.""".format(
             if "[](/ieri-end)" in line:
                 break
             if section and self.subreddit.display_name in line:
-                line = """* Ieri abbiamo giocato su r/DimmiOuija,
-è disponibile un [riassunto](/r/{sub}/wiki/{short})
-e le [statistiche](/r/{sub}/wiki/{short}_stats) relative""".format(
-                    short=self.name, sub=self.subreddit.display_name
-                )
+                line = f"""* Ieri abbiamo giocato su r/DimmiOuija,
+è disponibile un [riassunto](/r/{self.subreddit.display_name}/wiki/{self.name})
+e le [statistiche](/r/{self.subreddit.display_name}/wiki/{self.name}_stats) relative"""
                 lines[i] = line
                 break
         wiki_caffe.edit(content="\n".join(lines), reason="DimmiOuija chiusura")

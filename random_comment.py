@@ -13,7 +13,7 @@ def main(permalink: str) -> None:
     if not match:
         print("Comment not found")
         return
-    reddit = praw.Reddit(check_for_updates=False)
+    reddit = praw.Reddit(check_for_updates=False, client_secret=None)
     goodbye = reddit.comment(match.group(2))
     if not GOODBYE.match(goodbye.body):
         print("Comment is not a GOODBYE")

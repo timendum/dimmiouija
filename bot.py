@@ -80,10 +80,10 @@ LOGGER.setLevel(logging.INFO)
 class OuijaPost:
     """A post in ouija"""
 
-    def __init__(self, post: "praw.reddit.models.Submission") -> None:
+    def __init__(self, post: "praw.models.Submission") -> None:
         """Initialize."""
         self._post = post
-        self.author = None  # type: "praw.reddit.models.Redditor" | None
+        self.author = None  # type: "praw.models.Redditor" | None
         if post.author:
             self.author = post.author.name
         self.question = post.title
@@ -108,7 +108,7 @@ class OuijaPost:
         """Check if the submission waited too much for an answer"""
         return self._post.created_utc > OLD
 
-    def change_flair(self):
+    def change_flair(self) -> None:
         """Flair the post based on answer_text and send a PM"""
         if self.answer_text is None:
             if not self._post.link_flair_text:
@@ -145,9 +145,9 @@ class OuijaPost:
         """Check for answers in the comments and delete wrong comments"""
         self._post.comment_sort = "top"
         self._post.comments.replace_more(limit=None)
-        return self.browse_comments(self._post, [self._post])
+        return self.browse_comments(self._post)
 
-    def accept_answer(self, comment: "praw.reddit.models.Comment") -> bool:
+    def accept_answer(self, comment: "praw.models.Comment") -> bool:
         """
         Check if the comment contain a better answer.
 
@@ -160,14 +160,14 @@ class OuijaPost:
             return True
         return False
 
-    def moderation(self, comment: "praw.reddit.models.Comment", parent) -> bool:
+    def moderation(self, comment: "praw.models.Comment", parent) -> bool:
         """
         Delete the comment according to rule.
 
         Return True if deleted, False otherwise.
         """
 
-        def delete_thread(comment):
+        def delete_thread(comment) -> None:
             """Delete comments and all children"""
             replies = comment.replies
             replies.replace_more(limit=None)
@@ -185,16 +185,16 @@ class OuijaPost:
             return True
         return False
 
-    def permalink(self, comment: praw.models.reddit.comment) -> str:
+    def permalink(self, comment: praw.models.Comment) -> str:
         """Produce a shorter permalink"""
         return "https://www.reddit.com/r/{}/comments/{}//{}".format(
             self._post.subreddit.display_name, self._post.id, comment.id
         )
 
-    def browse_comments(self, parent, superparents):  # noqa: C901
+    def browse_comments(self, parent: praw.models.Comment) -> bool:  # noqa: C901
         """Given a comment return True if an answer is found"""
         found = False
-        existing = {}
+        existing = {} # type: dict[str, praw.models.Comment]
         # try replies for parent=comment
         try:
             comments = parent.replies
@@ -242,7 +242,7 @@ class OuijaPost:
                         continue
                 # the letter is not already insered, save it
                 existing[body] = comment
-                if self.browse_comments(comment, superparents + [parent]):
+                if self.browse_comments(comment):
                     # compose the answer
                     self.answer_text = body + self.answer_text
                     # to uppercase
@@ -258,7 +258,7 @@ class OuijaPost:
 class PMList:
     """Manage a list of user to message"""
 
-    def __init__(self, reddit: "praw.Reddit", subreddit: "praw.reddit.models.Subreddit") -> None:
+    def __init__(self, reddit: "praw.Reddit", subreddit: "praw.models.Subreddit") -> None:
         self.reddit = reddit
         self.wiki_main = subreddit.wiki["pmlist"]
         self.wiki_todo = subreddit.wiki["pmlist_todo"]
@@ -301,7 +301,7 @@ class Ouija:
         self.subreddit = reddit.subreddit(subreddit)
         self.pmlist = PMList(reddit, self.subreddit)
 
-    def check_submission(self):
+    def check_submission(self) -> None:
         """Check the submission for unanswered post"""
         submissions = self.subreddit.new(limit=100)
         for submission in submissions:
@@ -329,7 +329,7 @@ class Ouija:
                 post.change_flair()
         self.pmlist.send_next()
 
-    def open(self, swcaffe: str | None = None):
+    def open(self, swcaffe: str | None = None) -> None:
         """Open the subreddit to new submission"""
         self.subreddit.mod.update(type="public")
         LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
@@ -356,7 +356,7 @@ class Ouija:
             )
             wiki_caffe.edit(content=content_md, reason="DimmiOuija apertura")
 
-    def close(self):
+    def close(self) -> None:
         """Close the subreddit to new submission"""
         self.subreddit.mod.update(type="restricted")
         LOGGER.info("Subreddit chiuso")
@@ -364,7 +364,7 @@ class Ouija:
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + " "
         title = title + MESI[next_day.tm_mon]
         body = PROSSIMA_TESTO
-        unanswered = []  # type: list[praw.models.reddit.Submission]
+        unanswered = []  # type: list[praw.models.Submission]
         for submission in self.subreddit.new(limit=100):
             if OuijaPost(submission).is_unanswered():
                 unanswered.append(submission)
@@ -378,7 +378,7 @@ class Ouija:
         comment.mod.distinguish(sticky=True)
 
 
-def main():
+def main() -> None:
     """Perform a bot action"""
     parser = argparse.ArgumentParser(description="Activate mod bot on /r/DimmiOuija ")
     parser.add_argument(
@@ -402,7 +402,7 @@ if __name__ == "__main__":
     main()
 
 
-def auth():
+def auth() -> None:
     reddit = praw.Reddit(check_for_updates=False, client_secret=None)
     print(
         reddit.auth.url(

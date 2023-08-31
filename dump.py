@@ -9,8 +9,7 @@ from typing import TYPE_CHECKING
 import praw
 
 if TYPE_CHECKING:
-    from praw.models.reddit.comment import Comment
-    from praw.models.reddit.submission import Submission
+    from praw.models import Comment, Submission
 
 import bot
 
@@ -152,7 +151,7 @@ class Dumper:
         """Write variablies to Sqlite file"""
         cur = self._con.cursor()
         cur.executemany(
-            """insert into questions(
+            """INSERT OR REPLACE INTO questions(
             id,
             title,
             score,
@@ -160,7 +159,7 @@ class Dumper:
             author,
             permalink,
             answer,
-            week) values (?, ?, ?, ?, ?, ?, ?, ?)""",
+            week) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
             [
                 (
                     q["name"],
@@ -176,13 +175,13 @@ class Dumper:
             ],
         )
         cur.executemany(
-            """insert into comments(
+            """INSERT OR REPLACE into comments(
             id,
             parent_id,
             body,
             created_utc,
             author,
-            score) values (?, ?, ?, ?, ?, ?)""",
+            score) VALUES (?, ?, ?, ?, ?, ?)""",
             [
                 (c["name"], q["name"], c["body"], int(c["created_utc"]), c["author"], c["score"])
                 for q in questions

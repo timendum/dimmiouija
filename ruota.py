@@ -208,6 +208,7 @@ class OuijaPost:
         for comment in new_answers:
             found = self._handle_answer(comment)
             if found:
+                self._reveal_selftext(comment.author.name)
                 return True
         # now check new letters
         to_reveal = set()  # type: set[str]
@@ -228,6 +229,14 @@ class OuijaPost:
         new_text[2] = new_current
         self.missing = self.missing.union(new_missing)
         new_text[4] = new_text[4].split(":")[0] + ": " + " ".join(sorted(self.missing))
+        self._post.edit(body="\n".join(new_text))
+        return True
+
+    def _reveal_selftext(self, username) -> bool:
+        LOGGER.debug("Revealing solution with: %s ", username)
+        new_text = self._post.selftext.strip().split("\n")
+        new_text[2] = "Soluzione: " + self.solution
+        new_text[4] = "Ha indovinato la frase: u/" + username
         self._post.edit(body="\n".join(new_text))
         return True
 

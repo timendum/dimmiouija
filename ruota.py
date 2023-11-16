@@ -279,6 +279,7 @@ Ogni giocatore può:
         submission = self.subreddit.submit(title, selftext=text)
         submission.mod.suggested_sort(sort="new")
         submission.mod.flair(**UNANSWERED)
+        submission.mod.sticky(bottom=True)
         LOGGER.info("Opened %s", submission)
 
     def check_submission(self) -> None:

@@ -4,7 +4,7 @@ import logging
 import re
 import time
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import praw
 
@@ -293,7 +293,7 @@ Ogni giocatore può:
             if post.is_unanswered():
                 answer = post.process()
                 if answer:
-                    post.mod.flair(**ANSWERED)
+                    submission.mod.flair(**ANSWERED)
 
 
 def main() -> None:

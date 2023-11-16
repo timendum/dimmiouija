@@ -1,6 +1,6 @@
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "W", "I", "N", "UP", "B", "G", "PIE", "TCH", "PLE", "PLW"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "EM102", "EM103", "ISC", "G", "PIE", "PYI", "TCH", "PLE", "PLW"]
 ignore = []
 line-length = 100
 show-source = true

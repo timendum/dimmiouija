@@ -286,10 +286,6 @@ Ogni giocatore può:
         """Check the submission for unanswered post"""
         submissions = self.subreddit.new(limit=100)
         for submission in submissions:
-            if submission.distinguished:
-                continue
-            if submission.stickied:
-                continue
             post = OuijaPost(submission, self.solution)
             if post.is_unanswered():
                 answer = post.process()

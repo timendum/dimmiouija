@@ -45,7 +45,7 @@ def bottom_answer(questions: dict):
     return shorters
 
 
-def time_string(open_time: float | int) -> str:
+def time_string(open_time: float) -> str:
     """It converts Numeric seconds to italian string"""
     if open_time < 60 * 60 * 2:
         return f"{round(open_time / 60):d} minuti"
@@ -145,7 +145,7 @@ class Summarizer:
         except StatisticsError:
             pass
         try:
-            solvers_answer = [answer for answer in stats["solvers"].values()]
+            solvers_answer = stats["solvers"].values()
             variables["solver"] = {
                 "mean": mean(solvers_answer),
                 "median": median(solvers_answer),

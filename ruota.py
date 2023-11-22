@@ -317,49 +317,38 @@ Ogni giocatore può:
         LOGGER.info("Opened %s", submission)
 
     def check_submission(self) -> bool:
-        """Check the submission for unanswered post"""
+        """Check the submission for an unanswered post"""
         submissions = self.subreddit.new(limit=100)
         for submission in submissions:
-            post = OuijaPost(submission, self.solution)
-            if post.is_unanswered():
-                answer = post.process()
-                if answer:
-                    submission.mod.flair(**ANSWERED)
-                    submission.mod.sticky(state=False)
-                    return True
+            if not submission.link_flair_text:
+                continue
+            if submission.link_flair_text == UNANSWERED["text"]:
+                post = OuijaPost(submission, self.solution)
+                if post.is_unanswered():
+                    answer = post.process()
+                    if answer:
+                        submission.mod.flair(**ANSWERED)
+                return True
+            if submission.link_flair_text == ANSWERED["text"]:
+                try:
+                    post = OuijaPost(submission, self.solution)
+                    if self.solution in post.current:
+                        return True
+                except ValueError:
+                    continue
         return False
 
     def work(self):
         wpage = self.subreddit.wiki["rdellaf"]
         now = datetime.now()
         if (now - timedelta(hours=24)).timestamp() > wpage.revision_date:
-            # last revision on the wiki page is too old, nothing to to
+            LOGGER.debug("Old answer")
             return
-        found = False
-        submissions = self.subreddit.new(limit=100)
-        for submission in submissions:
-            if not submission.link_flair_text:
-                continue
-            if submission.link_flair_text == UNANSWERED["text"]:
-                found = True
-                post = OuijaPost(submission, self.solution)
-                if post.is_unanswered():
-                    answer = post.process()
-                    if answer:
-                        submission.mod.flair(**ANSWERED)
-                break
-            if submission.link_flair_text == ANSWERED["text"]:
-                try:
-                    post = OuijaPost(submission, self.solution)
-                    if self.solution in post.current:
-                        found = True
-                        break
-                except ValueError:
-                    continue
+        found = self.check_submission()
         if not found:
             self.open()
         else:
-            LOGGER.debug("No unanswered post, old answer")
+            LOGGER.debug("No unanswered post")
 
 
 def main() -> None:

@@ -78,9 +78,16 @@ class OuijaPost:
         self.solution = solution
         self.uletters = defaultdict(int)  # type: dict[str, int]
         self.uanswers = defaultdict(int)  # type: dict[str, int]
-        if self._post.link_flair_text != UNANSWERED["text"]:
+        if not self._post.link_flair_text:
+            return
+        if (
+            self._post.link_flair_text != UNANSWERED["text"]
+            and self._post.link_flair_text != ANSWERED["text"]
+        ):
             return
         self.current = post.selftext.strip().split("\n")[2]
+        if self._post.link_flair_text != UNANSWERED["text"]:
+            return
         self.missing = set(
             post.selftext.strip().split("\n")[4].split(":")[1].strip().replace(" ", "")
         )
@@ -90,6 +97,9 @@ class OuijaPost:
         LOGGER.debug("Post: %s", post.permalink)
         LOGGER.debug("Current: %s", self.current)
         LOGGER.debug("Target : %s", self.solution)
+        if len(self.solution) != len(self.current):
+            e = f"Wrong solution: {self.solution} vs {self.current}"
+            raise ValueError(e)
         LOGGER.debug("Missing: %s", self.missing)
 
     def is_unanswered(self) -> bool:
@@ -269,11 +279,13 @@ class Ouija:
         self.solution = self.subreddit.wiki["rdellaf"].content_md.upper()
 
     def _title_count(self) -> str:
-        return " ".join([
-            str(len(s))
-            for s in re.split(r"([" + LETTERS + "]+)", self.solution)
-            if s and s[0] in LETTERS
-        ])
+        return " ".join(
+            [
+                str(len(s))
+                for s in re.split(r"([" + LETTERS + "]+)", self.solution)
+                if s and s[0] in LETTERS
+            ]
+        )
 
     def open(self) -> None:
         title = "Ruota della fortuna - " + self._title_count()
@@ -304,7 +316,7 @@ Ogni giocatore può:
         submission.mod.sticky(bottom=True)
         LOGGER.info("Opened %s", submission)
 
-    def check_submission(self) -> None:
+    def check_submission(self) -> bool:
         """Check the submission for unanswered post"""
         submissions = self.subreddit.new(limit=100)
         for submission in submissions:
@@ -313,6 +325,39 @@ Ogni giocatore può:
                 answer = post.process()
                 if answer:
                     submission.mod.flair(**ANSWERED)
+                    submission.mod.sticky(state=False)
+                    return True
+        return False
+
+    def work(self):
+        wpage = self.subreddit.wiki["rdellaf"]
+        now = datetime.now()
+        if (now - timedelta(hours=24)).timestamp() > wpage.revision_date:
+            # last revision on the wiki page is too old, nothing to to
+            return
+        found = False
+        submissions = self.subreddit.new(limit=100)
+        for submission in submissions:
+            if not submission.link_flair_text:
+                continue
+            if submission.link_flair_text == UNANSWERED["text"]:
+                found = True
+                post = OuijaPost(submission, self.solution)
+                if post.is_unanswered():
+                    answer = post.process()
+                    if answer:
+                        submission.mod.flair(**ANSWERED)
+                break
+            if submission.link_flair_text == ANSWERED["text"]:
+                try:
+                    post = OuijaPost(submission, self.solution)
+                    if self.solution in post.current:
+                        found = True
+                        break
+                except ValueError:
+                    continue
+        if not found:
+            self.open()
 
 
 def main() -> None:
@@ -322,8 +367,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Activate mod bot on /r/DimmiOuija ")
     parser.add_argument(
         "action",
-        choices=["check", "open"],
-        default="check",
+        choices=["check", "open", "work"],
+        default="work",
         help="The action to perform (default: %(default)s)",
     )
     parser.add_argument("-v", "--verbose", help="increase output verbosity", action="store_true")
@@ -339,6 +384,8 @@ def main() -> None:
         bot.check_submission()
     elif args.action == "open":
         bot.open()
+    elif args.action == "work":
+        bot.work()
 
 
 if __name__ == "__main__":

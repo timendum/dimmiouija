@@ -358,6 +358,8 @@ Ogni giocatore può:
                     continue
         if not found:
             self.open()
+        else:
+            LOGGER.debug("No unanswered post, old answer")
 
 
 def main() -> None:

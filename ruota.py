@@ -57,6 +57,16 @@ purtroppo il tuo commento non è la frase da indovinare.
 
 > {body}
 """  # noqa
+ANSWER_LEN = """Ciao u/{author},  
+il tuo commento non è compatibile con la frase da indovinare,
+fai un altro tentativo.
+
+Ad esempio non è lunga lo stesso numero di caratteri,
+oppure non contiene le lettere indovinate
+o simili.
+
+> {body}
+"""  # noqa
 
 
 class OuijaPost:
@@ -152,7 +162,10 @@ class OuijaPost:
             self._reply(comment, True, ANSWER_MAX)
             return False
         self.uanswers[author] = 1 + self.uanswers[author]
-        if comment.body.strip().upper() == self.solution:
+        body = comment.body.strip().upper()
+        if len(body) != len(self.solution):
+            self._reply(comment, True, ANSWER_LEN)
+        elif body == self.solution:
             self._reply(comment, False, ANSWER_OK)
             return True
         else:

@@ -333,6 +333,7 @@ Ogni giocatore può:
                 try:
                     post = OuijaPost(submission, self.solution)
                     if self.solution in post.current:
+                        LOGGER.debug("Found solved %s", post)
                         return True
                 except ValueError:
                     continue
@@ -347,8 +348,6 @@ Ogni giocatore può:
         found = self.check_submission()
         if not found:
             self.open()
-        else:
-            LOGGER.debug("No unanswered post")
 
 
 def main() -> None:

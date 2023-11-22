@@ -34,7 +34,7 @@ LOGGER.setLevel(logging.ERROR)
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÒÙ"
 
 LETTER_MAX = """Ciao,
-non puoi più provare ad indovinare lettere, i tuoi tentativi sono esauriti.
+devi aspettare di più per poter chiedere un'altra lettera.
 """
 LETTER_OK = """Ciao u/{author},  
 la lettera "`{body}`" appare nella frase.
@@ -47,7 +47,7 @@ LETTER_INVALID = """La lettera "`{body}`" non è tra quelle valide:
 > {LETTERS}
 """
 ANSWER_MAX = """Ciao,  
-i tuoi tentativi di indovinare la frase sono esauriti.
+devi aspettare di più per poter fare un'altro tentativo.
 """  # noqa
 ANSWER_OK = """Ottimo lavoro u/{author},  
 Hai indovinato la soluzione: `{body}`

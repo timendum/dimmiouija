@@ -10,6 +10,8 @@ Hanno partecipato {{mediums}} medium.
 
 Le risposte complessivamente sono lunghe {{charlenght}} caratteri.
 
+Sono state risolte {{ruote|length}} Ruote della fortuna.
+
 ## Lunghezza delle risposte
 
 Le risposte più lunghe sono state:
@@ -63,6 +65,14 @@ Gli utenti che hanno inserito più Goodbye:
 1. /u/{{key}} ({{value}})
 {%- endfor %}
 
+
+## Solutori della Ruota della fortuna
+
+Gli utenti che hanno indovinato di più le Ruote della fortuna: 
+{% for key, value in ruote_solvers|top_counter(5) %}
+1. /u/{{key}} ({{value}})
+{%- endfor %}
+
 ## I caratteri
 
 Sono stati utilizzati {{chars|length}} caratteri diversi: 
@@ -84,6 +94,13 @@ La classifica delle tempi di chiusura:
 ...
 
 Ultimo: {% for time, question in open_time[-1:] %}[{{question.title}}]({{question.permalink}}) ({{time|time_string}}){% endfor %}
+
+Le ruote della fortuna più rapide: 
+{% for time, ruota in ruote_open_time %}
+1. [{{ruota.answer}}]({{ruota.permalink}}) ({{time|time_string}})
+{%- endfor %}
+
+
 
 {% if otime %}### Statistiche
 

@@ -1,6 +1,4 @@
 """Summarize a brief period of DimmiOuija activity"""
-from __future__ import annotations
-
 import datetime
 import json
 import sqlite3
@@ -12,12 +10,14 @@ if TYPE_CHECKING:
     from praw.models import Comment, Submission
 
 import bot
+import ruota
 
 ANSWERED_FLAIR = bot.ANSWERED["text"]
 GOODBYE = bot.GOODBYE
+RUOTA_ANSWERED = ruota.ANSWERED["text"]
 
 
-def find_solution(submission: Submission, solution: str) -> list[Comment] | None:
+def find_solution(submission: "Submission", solution: str) -> "list[Comment] | None":
     """Given a submission and the solution,
     RETURNS the list of comment, in order, including the Goodbye"""
     submission.comments.replace_more(limit=None)
@@ -87,7 +87,7 @@ class Dumper:
         submissions = self.subreddit.top(time_filter="week", limit=None)
         questions = []  # type: list[dict]
 
-        def parse_submission(submission: Submission) -> None:
+        def parse_submission(submission: "Submission") -> None:
             """Add the submission to text"""
             params = {
                 "title": submission.title,
@@ -103,13 +103,10 @@ class Dumper:
             questions.append(params)
 
         for submission in submissions:
-            if submission.distinguished:
-                continue
-            if submission.stickied:
-                continue
-            if not submission.link_flair_text:
-                continue
-            if not submission.link_flair_text.startswith(ANSWERED_FLAIR):
+            if not submission.link_flair_text or not submission.link_flair_text.startswith(
+                ANSWERED_FLAIR
+            ):
+                print("Skipped: ", submission.permalink)
                 continue
             parse_submission(submission)
             self._update_week(questions)
@@ -118,11 +115,81 @@ class Dumper:
     def _update_week(self, questions):
         self.week = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime("%Y_%W")
 
+    def get_ruota(self) -> list[dict]:
+        """Check the hot submission of answered ruota"""
+        submissions = self.subreddit.top(time_filter="week", limit=None)
+        questions = []  # type: list[dict]
+
+        def parse_submission(submission: "Submission") -> None:
+            """Add the submission to text"""
+            params = {
+                "title": submission.title,
+                "url": submission.url,
+                "name": submission.name,
+                "score": submission.score,
+                "created_utc": submission.created_utc,
+                "_thread": submission,
+                "author": author(submission),
+                "permalink": submission.permalink,
+                "answer": submission.selftext.strip().split("\n")[2].split(":")[-1].strip(),
+            }
+            questions.append(params)
+
+        for submission in submissions:
+            if not submission.link_flair_text or not submission.link_flair_text.startswith(
+                RUOTA_ANSWERED
+            ):
+                continue
+            parse_submission(submission)
+            print("Ruota: ", submission.permalink)
+        return questions
+
+    @staticmethod
+    def add_ruota(questions) -> None:
+        """Add comments section to ruota"""
+
+        def parse_comment(comment: "Comment") -> dict:
+            """Add the submission to text"""
+            params = {
+                "body": comment.body.strip(),
+                "name": comment.name,
+                "score": comment.score,
+                "permalink": comment.permalink,
+                "created_utc": comment.created_utc,
+                "author": author(comment),
+            }
+            return params
+
+        for question in questions:
+            comments = []
+            question["_thread"].comments.replace_more(limit=None)
+            solution = False
+            for c in question["_thread"].comments.list():
+                if c.removed:
+                    continue
+                if c.distinguished:
+                    continue
+                if c.locked:
+                    continue
+                body = c.body.strip().upper()
+                if len(body) > 1:
+                    if body != question["answer"]:
+                        continue
+                    solution = True
+                comments.append(parse_comment(c))
+            if not solution:
+                print("No solution found:", question["_thread"])
+                question["comments"] = []
+            else:
+                comments = sorted(comments, key=lambda c: (len(c["body"]), c["created_utc"]))
+                question["comments"] = comments
+            del question["_thread"]
+
     @staticmethod
     def add_threads(questions) -> None:
         """Add comments section to questions"""
 
-        def parse_comment(comment: Comment) -> dict:
+        def parse_comment(comment: "Comment") -> dict:
             """Add the submission to text"""
             params = {
                 "body": comment.body,
@@ -142,12 +209,14 @@ class Dumper:
                 question["comments"] = [parse_comment(comment) for comment in comments]
             del question["_thread"]
 
-    def write_json(self, questions):
+    def write_json(self, questions, ruote):
         """Write variablies to JSON"""
         with open(f"data/{self.week}.json", "w", encoding="utf-8") as fout:
             json.dump(questions, fout, indent=4)
+        with open(f"data/{self.week}-ruote.json", "w", encoding="utf-8") as fout:
+            json.dump(ruote, fout, indent=4)
 
-    def to_sql(self, questions) -> None:
+    def to_sql(self, questions, ruote) -> None:
         """Write variablies to Sqlite file"""
         cur = self._con.cursor()
         cur.executemany(
@@ -188,6 +257,44 @@ class Dumper:
                 for c in q["comments"]
             ],
         )
+        cur.executemany(
+            """INSERT OR REPLACE INTO ruote(
+            id,
+            title,
+            score,
+            created_utc,
+            author,
+            permalink,
+            answer,
+            week) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            [
+                (
+                    q["name"],
+                    q["title"],
+                    q["score"],
+                    int(q["created_utc"]),
+                    q["author"],
+                    q["permalink"],
+                    q["answer"],
+                    self.week,
+                )
+                for q in ruote
+            ],
+        )
+        cur.executemany(
+            """INSERT OR REPLACE into rcomments(
+            id,
+            parent_id,
+            body,
+            created_utc,
+            author,
+            score) VALUES (?, ?, ?, ?, ?, ?)""",
+            [
+                (c["name"], q["name"], c["body"], int(c["created_utc"]), c["author"], c["score"])
+                for q in ruote
+                for c in q["comments"]
+            ],
+        )
         self._con.commit()
 
 
@@ -196,8 +303,10 @@ def main():
     summary = Dumper("DimmiOuija")
     questions = summary.get_questions()
     summary.add_threads(questions)
-    summary.to_sql(questions)
-    summary.write_json(questions)
+    ruote = summary.get_ruota()
+    summary.add_ruota(ruote)
+    summary.to_sql(questions, ruote)
+    summary.write_json(questions, ruote)
 
 
 if __name__ == "__main__":

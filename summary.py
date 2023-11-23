@@ -16,7 +16,12 @@ DATE_FORMAT = "%d/%m/%Y"
 def top_counter(count: Counter, size: int) -> list[tuple[Any, int]]:
     """Return at least 'size' most common, return more in case of same value elements"""
     sorted_values = sorted(count.values(), reverse=True)
-    value_limit = sorted_values[size]
+    while True:
+        try:
+            value_limit = sorted_values[size]
+            break
+        except IndexError:
+            size -=1
     real_size = len([value for value in sorted_values if value >= value_limit])
     return count.most_common(real_size)
 
@@ -80,19 +85,22 @@ class Summarizer:
         self.fullname = datetime.datetime.fromtimestamp(questions[0]["created_utc"]).strftime(
             DATE_FORMAT
         )
-        return questions
+        ruotepath = ffilepath.with_name(ffilepath.name.replace(".", "-ruote."))
+        with ruotepath.open("rt", encoding="utf-8") as fin:
+            ruote = json.load(fin)
+        return questions, ruote
 
-    def write_answers(self, questions) -> None:
+    def write_answers(self, questions, ruote) -> None:
         """Transfer parsed pages to subreddit wiki"""
         env = Environment(loader=FileSystemLoader("."))
         template = env.get_template("wiki.md")
-        text = template.render(day=self.fullname, questions=questions)
+        text = template.render(day=self.fullname, questions=questions, ruote=ruote)
         with open(f"data/{self.name}.md", "w", encoding="utf-8") as fout:
             fout.write(text)
         self.subreddit.wiki.create(name=self.name, content=text, reason="Pagina creata")
 
     @staticmethod
-    def make_stats(questions):
+    def make_stats(questions, ruote):
         """Return statistics of parsed questions with answer"""
         authors = Counter([question["author"] for question in questions])
         solvers = Counter(
@@ -114,27 +122,36 @@ class Summarizer:
             for question in questions
         ]
         open_time = sorted(open_time, key=lambda item: item[0])
+        ruote_open_time = [
+            (
+                ruota["comments"][-1]["created_utc"] - ruota["created_utc"],
+                ruota,
+            )
+            for ruota in ruote
+        ]
+        ruote_open_time = sorted(ruote_open_time, key=lambda item: item[0])
+        ruote_solvers = Counter([ruota["comments"][-1]["author"] for ruota in ruote])
         return {
             "authors": authors,
             "solvers": solvers,
             "goodbyers": goodbyers,
             "chars": chars,
             "open_time": open_time,
+            "ruote_solvers": ruote_solvers,
+            "ruote_open_time": ruote_open_time,
         }
 
-    def write_stats(self, questions, stats) -> None:
+    def write_stats(self, questions, ruote, stats) -> None:
         """Write a <date>_stats.md file with statistics"""
         variables = {
             "day": self.fullname,
             "questions": questions,
-            "authors": stats["authors"],
-            "solvers": stats["solvers"],
-            "goodbyers": stats["goodbyers"],
-            "chars": stats["chars"],
-            "open_time": stats["open_time"],
+            "ruote": ruote,
             "mediums": len(set(stats["solvers"]) | set(stats["goodbyers"])),
             "charlenght": sum(stats["chars"].values()),
         }
+        for k, v in stats.items():
+            variables[k] = v
         try:
             answer_len = [len(question["answer"]) for question in questions]
             variables["size"] = {
@@ -167,8 +184,8 @@ class Summarizer:
         text = template.render(**variables)
         with open(f"data/{self.name}_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
-        self.add_wiki()
+        # self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
+        # self.add_wiki()
         with open(f"data/{self.name}_stats.json", "w", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
@@ -249,14 +266,14 @@ def sql_all():
 def main():
     """Perform all bot actions"""
     summary = Summarizer("DimmiOuija")
-    questions = summary.load_infos()
+    questions, ruote = summary.load_infos()
     if not questions:
         print("ERROR - Data missing - Please run dump.py first")
         return
-    summary.write_answers(questions)
-    stats = summary.make_stats(questions)
-    summary.write_stats(questions, stats)
-    summary.caffe_wiki("italy")
+    summary.write_answers(questions, ruote)
+    stats = summary.make_stats(questions, ruote)
+    summary.write_stats(questions, ruote, stats)
+    # summary.caffe_wiki("italy")
 
 
 if __name__ == "__main__":

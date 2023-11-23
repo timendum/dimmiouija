@@ -184,8 +184,8 @@ class Summarizer:
         text = template.render(**variables)
         with open(f"data/{self.name}_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        # self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
-        # self.add_wiki()
+        self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
+        self.add_wiki()
         with open(f"data/{self.name}_stats.json", "w", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
@@ -273,7 +273,7 @@ def main():
     summary.write_answers(questions, ruote)
     stats = summary.make_stats(questions, ruote)
     summary.write_stats(questions, ruote, stats)
-    # summary.caffe_wiki("italy")
+    summary.caffe_wiki("italy")
 
 
 if __name__ == "__main__":

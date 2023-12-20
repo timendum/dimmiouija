@@ -273,6 +273,7 @@ class Ouija:
         subreddit = DimmiOuija subreddit
         """
         reddit = praw.Reddit(check_for_updates=False, client_secret=None)
+        reddit.validate_on_submit = True
         self._reddit = reddit
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)

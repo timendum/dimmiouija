@@ -194,7 +194,7 @@ class OuijaPost:
     def browse_comments(self, parent: praw.models.Comment) -> bool:  # noqa: C901
         """Given a comment return True if an answer is found"""
         found = False
-        existing = {} # type: dict[str, praw.models.Comment]
+        existing = {}  # type: dict[str, praw.models.Comment]
         # try replies for parent=comment
         try:
             comments = parent.replies
@@ -372,7 +372,7 @@ class Ouija:
             body += PROSSIMA_APERTE
             body += "\n".join([f"* [{sub.title}]({sub.permalink})" for sub in unanswered])
         submission = self.subreddit.submit(title, selftext=PROSSIMA_TESTO)
-        submission.mod.sticky()
+        submission.mod.sticky(bottom=False)
         submission.mod.distinguish()
         comment = submission.reply(PROSSIMA_COMMENTO)
         comment.mod.distinguish(sticky=True)

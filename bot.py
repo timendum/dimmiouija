@@ -80,10 +80,10 @@ LOGGER.setLevel(logging.INFO)
 class OuijaPost:
     """A post in ouija"""
 
-    def __init__(self, post: "praw.models.Submission") -> None:
+    def __init__(self, post: "praw.reddit.models.Submission") -> None:
         """Initialize."""
         self._post = post
-        self.author = None  # type: "praw.models.Redditor" | None
+        self.author = None  # type: "praw.reddit.models.Redditor | None"
         if post.author:
             self.author = post.author.name
         self.question = post.title
@@ -147,7 +147,7 @@ class OuijaPost:
         self._post.comments.replace_more(limit=None)
         return self.browse_comments(self._post)
 
-    def accept_answer(self, comment: "praw.models.Comment") -> bool:
+    def accept_answer(self, comment: "praw.reddit.models.Comment") -> bool:
         """
         Check if the comment contain a better answer.
 
@@ -160,7 +160,7 @@ class OuijaPost:
             return True
         return False
 
-    def moderation(self, comment: "praw.models.Comment", parent) -> bool:
+    def moderation(self, comment: "praw.reddit.models.Comment", parent) -> bool:
         """
         Delete the comment according to rule.
 
@@ -185,16 +185,16 @@ class OuijaPost:
             return True
         return False
 
-    def permalink(self, comment: praw.models.Comment) -> str:
+    def permalink(self, comment: "praw.reddit.models.Comment") -> str:
         """Produce a shorter permalink"""
         return "https://www.reddit.com/r/{}/comments/{}//{}".format(
             self._post.subreddit.display_name, self._post.id, comment.id
         )
 
-    def browse_comments(self, parent: praw.models.Comment) -> bool:  # noqa: C901
+    def browse_comments(self, parent: "praw.reddit.models.Comment") -> bool:  # noqa: C901
         """Given a comment return True if an answer is found"""
         found = False
-        existing = {}  # type: dict[str, praw.models.Comment]
+        existing = {}  # type: dict[str, praw.reddit.models.Comment]
         # try replies for parent=comment
         try:
             comments = parent.replies
@@ -258,7 +258,7 @@ class OuijaPost:
 class PMList:
     """Manage a list of user to message"""
 
-    def __init__(self, reddit: "praw.Reddit", subreddit: "praw.models.Subreddit") -> None:
+    def __init__(self, reddit: "praw.Reddit", subreddit: "praw.reddit.models.Subreddit") -> None:
         self.reddit = reddit
         self.wiki_main = subreddit.wiki["pmlist"]
         self.wiki_todo = subreddit.wiki["pmlist_todo"]
@@ -313,6 +313,8 @@ class Ouija:
                 if not submission.link_flair_text:
                     submission.mod.flair(**MODPOST)
                 continue
+            if submission.author == self.me:
+                continue
             post = OuijaPost(submission)
             if post.is_unanswered():
                 answer = post.process()
@@ -364,7 +366,7 @@ class Ouija:
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + " "
         title = title + MESI[next_day.tm_mon]
         body = PROSSIMA_TESTO
-        unanswered = []  # type: list[praw.models.Submission]
+        unanswered = []  # type: list[praw.reddit.models.Submission]
         for submission in self.subreddit.new(limit=100):
             if OuijaPost(submission).is_unanswered():
                 unanswered.append(submission)

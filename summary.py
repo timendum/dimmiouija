@@ -21,7 +21,7 @@ def top_counter(count: Counter, size: int) -> list[tuple[Any, int]]:
             value_limit = sorted_values[size]
             break
         except IndexError:
-            size -=1
+            size -= 1
     real_size = len([value for value in sorted_values if value >= value_limit])
     return count.most_common(real_size)
 
@@ -259,7 +259,7 @@ def sql_all():
         except json.decoder.JSONDecodeError as e:
             print(e, ffilepath)
         summary._update_week(questions)
-        summary.to_sql(questions)
+        summary.to_sql(questions, [])
         print("ok", ffilepath, len(questions))
 
 

@@ -51,19 +51,11 @@ devi aspettare di più per poter fare un'altro tentativo.
 """  # noqa
 ANSWER_OK = """Ottimo lavoro u/{author},  
 Hai indovinato la soluzione: `{body}`
+
+Erano state rivelate {ncurrent} lettere.
 """  # noqa
 ANSWER_NO = """Ciao u/{author},  
 purtroppo il tuo commento non è la frase da indovinare.
-
-> {body}
-"""  # noqa
-ANSWER_LEN = """Ciao u/{author},  
-il tuo commento non è compatibile con la frase da indovinare,
-fai un altro tentativo.
-
-Ad esempio non è lunga lo stesso numero di caratteri,
-oppure non contiene le lettere indovinate
-o simili.
 
 > {body}
 """  # noqa
@@ -72,7 +64,7 @@ o simili.
 class OuijaPost:
     """A post in ouija"""
 
-    def __init__(self, post: "praw.models.Submission", solution: str) -> None:
+    def __init__(self, post: "praw.reddit.models.Submission", solution: str) -> None:
         """Initialize."""
         self._post = post
         self.solution = solution
@@ -114,7 +106,7 @@ class OuijaPost:
         self._post.comments.replace_more(limit=None)
         return self.browse_comments(self._post)
 
-    def already_replied(self, comment: praw.models.Comment) -> bool | str:
+    def already_replied(self, comment: "praw.reddit.models.Comment") -> bool | str:
         """Return False or the username in the reply from the bot"""
         for r in comment.replies:
             if r.author != self._post.author:
@@ -128,14 +120,14 @@ class OuijaPost:
         return False
 
     @staticmethod
-    def _reply(comment: praw.models.Comment, remove: bool, stmpl: str, **fargs):
+    def _reply(comment: "praw.reddit.models.Comment", remove: bool, stmpl: str, **fargs):
         author = comment.author.name
         body = comment.body.strip().upper()
         comment.reply(body=stmpl.format(author=author, body=body, **fargs)).mod.lock()
         if remove:
             comment.mod.remove()
 
-    def _check_letter(self, comment: praw.models.Comment) -> bool:
+    def _check_letter(self, comment: "praw.reddit.models.Comment") -> bool:
         """Return True if it's a new comment, to be handled"""
         rauthor = self.already_replied(comment)
         if rauthor and rauthor is not True:
@@ -150,7 +142,7 @@ class OuijaPost:
             return False
         return True
 
-    def _check_answer(self, comment: praw.models.Comment) -> bool:
+    def _check_answer(self, comment: "praw.reddit.models.Comment") -> bool:
         """Return True if it's a new comment, to be handled"""
         rauthor = self.already_replied(comment)
         if rauthor and rauthor is not True:
@@ -165,7 +157,7 @@ class OuijaPost:
             return False
         return True
 
-    def _handle_answer(self, comment: praw.models.Comment) -> bool:
+    def _handle_answer(self, comment: "praw.reddit.models.Comment") -> bool:
         """Return True if it's a the correct answer"""
         author = comment.author.name
         if self.uanswers[author] >= MAX_ANSWERS:
@@ -173,17 +165,17 @@ class OuijaPost:
             return False
         self.uanswers[author] = 1 + self.uanswers[author]
         body = comment.body.strip().upper()
-        if len(body) != len(self.solution):
-            self._reply(comment, True, ANSWER_LEN)
-        elif body == self.solution:
-            self._reply(comment, False, ANSWER_OK)
+        if re.sub(r"\W+", "", body) == re.sub(r"\W+", "", self.solution):
+            ncurrent = len(set(re.sub(r"\W+", "", self.solution)) - {"- "})
+            self._reply(comment, False, ANSWER_OK, ncurrent=ncurrent)
+            self._post.mod.sticky(state=False)
             return True
         else:
             self._reply(comment, False, ANSWER_NO)
         return False
 
     def _handle_letter(
-        self, comment: praw.models.Comment, to_reveal: set[str], new_missing: set[str]
+        self, comment: "praw.reddit.models.Comment", to_reveal: set[str], new_missing: set[str]
     ) -> bool:
         # Handle new letter
         author = comment.author.name
@@ -206,7 +198,7 @@ class OuijaPost:
                 new_missing.add(body)
         return False
 
-    def browse_comments(self, parent: praw.models.Comment) -> bool:
+    def browse_comments(self, parent: "praw.reddit.models.Submission") -> bool:
         new_letters = []
         new_answers = []
         # loop for every child comment
@@ -241,7 +233,7 @@ class OuijaPost:
         self._update_selftext(to_reveal, new_missing)
         return False
 
-    def _update_selftext(self, to_reveal: set[str], new_missing: list[str]) -> bool:
+    def _update_selftext(self, to_reveal: set[str], new_missing: set[str]) -> bool:
         if not to_reveal and not new_missing:
             return False
         LOGGER.debug("Updating text with: %s and %s", to_reveal, new_missing)

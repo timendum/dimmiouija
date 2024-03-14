@@ -304,7 +304,7 @@ def main():
     """Perform all bot actions"""
     summary = Dumper("DimmiOuija")
     questions = summary.get_questions()
-    # summary.add_threads(questions)
+    summary.add_threads(questions)
     ruote = summary.get_ruota()
     summary.add_ruota(ruote)
     summary.to_sql(questions, ruote)

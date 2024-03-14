@@ -1,6 +1,7 @@
 """Summarize a brief period of DimmiOuija activity"""
 import datetime
 import json
+import re
 import sqlite3
 from typing import TYPE_CHECKING
 
@@ -122,6 +123,7 @@ class Dumper:
 
         def parse_submission(submission: "Submission") -> None:
             """Add the submission to text"""
+            answer_row = submission.selftext.strip().split("\n")[2]
             params = {
                 "title": submission.title,
                 "url": submission.url,
@@ -131,7 +133,7 @@ class Dumper:
                 "_thread": submission,
                 "author": author(submission),
                 "permalink": submission.permalink,
-                "answer": submission.selftext.strip().split("\n")[2].split(":")[-1].strip(),
+                "answer": ":".join(answer_row.split(":")[1:]).strip(),
             }
             questions.append(params)
 
@@ -173,7 +175,7 @@ class Dumper:
                     continue
                 body = c.body.strip().upper()
                 if len(body) > 1:
-                    if body != question["answer"]:
+                    if re.sub(r"\W+", "", body) != re.sub(r"\W+", "", question["answer"]):
                         continue
                     solution = True
                 comments.append(parse_comment(c))
@@ -302,7 +304,7 @@ def main():
     """Perform all bot actions"""
     summary = Dumper("DimmiOuija")
     questions = summary.get_questions()
-    summary.add_threads(questions)
+    # summary.add_threads(questions)
     ruote = summary.get_ruota()
     summary.add_ruota(ruote)
     summary.to_sql(questions, ruote)

@@ -15,6 +15,8 @@ DATE_FORMAT = "%d/%m/%Y"
 
 def top_counter(count: Counter, size: int) -> list[tuple[Any, int]]:
     """Return at least 'size' most common, return more in case of same value elements"""
+    if not count:
+        return []
     sorted_values = sorted(count.values(), reverse=True)
     while True:
         try:

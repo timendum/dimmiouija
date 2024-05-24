@@ -6,9 +6,11 @@ Risposte del {{day}}
 > {{question.answer}}
 {% endfor %}
 
+{% if ruota %}
 ## Ruota della fortuna:
 
 {% for ruota in ruote %}
 ### [{{ruota.answer}}]({{ruota.permalink}})
 
 {% endfor %}
+{% endif %}

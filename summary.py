@@ -1,4 +1,5 @@
 """Summarize a brief period of DimmiOuija activity"""
+
 import datetime
 import json
 from collections import Counter
@@ -10,6 +11,7 @@ from typing import Any
 import praw
 from jinja2 import Environment, FileSystemLoader
 
+READ_ONLY = False
 DATE_FORMAT = "%d/%m/%Y"
 
 
@@ -64,9 +66,10 @@ class Summarizer:
 
     def __init__(self, subreddit: str) -> None:
         """Initialize."""
-        reddit = praw.Reddit(check_for_updates=False, client_secret=None)
-        self._reddit = reddit
-        self.subreddit = reddit.subreddit(subreddit)
+        if not READ_ONLY:
+            reddit = praw.Reddit(check_for_updates=False, client_secret=None)
+            self._reddit = reddit
+            self.subreddit = reddit.subreddit(subreddit)
         self.load_infos()
 
     def load_infos(self) -> dict:
@@ -99,7 +102,8 @@ class Summarizer:
         text = template.render(day=self.fullname, questions=questions, ruote=ruote)
         with open(f"data/{self.name}.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki.create(name=self.name, content=text, reason="Pagina creata")
+        if not READ_ONLY:
+            self.subreddit.wiki.create(name=self.name, content=text, reason="Pagina creata")
 
     @staticmethod
     def make_stats(questions, ruote):
@@ -186,8 +190,11 @@ class Summarizer:
         text = template.render(**variables)
         with open(f"data/{self.name}_stats.md", "w", encoding="utf-8") as fout:
             fout.write(text)
-        self.subreddit.wiki.create(name=self.name + "_stats", content=text, reason="Pagina creata")
-        self.add_wiki()
+        if not READ_ONLY:
+            self.subreddit.wiki.create(
+                name=self.name + "_stats", content=text, reason="Pagina creata"
+            )
+            self.add_wiki()
         with open(f"data/{self.name}_stats.json", "w", encoding="utf-8") as fout:
             json.dump(variables, fout, indent=4)
 
@@ -212,6 +219,8 @@ insieme alle [statistiche](/r/{self.subreddit.display_name}/wiki/{self.name}_sta
         )
 
     def caffe_wiki(self, swcaffe: str | None = None):
+        if READ_ONLY:
+            return
         wiki_caffe = self._reddit.subreddit(swcaffe).wiki["ambrogio_caffe"]
         lines = wiki_caffe.content_md.replace("\r", "").split("\n")
         section = False
@@ -222,10 +231,10 @@ insieme alle [statistiche](/r/{self.subreddit.display_name}/wiki/{self.name}_sta
             if "[](/ieri-end)" in line:
                 break
             if section and self.subreddit.display_name in line:
-                line = f"""* Ieri abbiamo giocato su r/DimmiOuija,
+                nline = f"""* Ieri abbiamo giocato su r/DimmiOuija,
 è disponibile un [riassunto](/r/{self.subreddit.display_name}/wiki/{self.name})
 e le [statistiche](/r/{self.subreddit.display_name}/wiki/{self.name}_stats) relative"""
-                lines[i] = line
+                lines[i] = nline
                 break
         wiki_caffe.edit(content="\n".join(lines), reason="DimmiOuija chiusura")
 
@@ -275,7 +284,8 @@ def main():
     summary.write_answers(questions, ruote)
     stats = summary.make_stats(questions, ruote)
     summary.write_stats(questions, ruote, stats)
-    summary.caffe_wiki("italy")
+    if not READ_ONLY:
+        summary.caffe_wiki("italy")
 
 
 if __name__ == "__main__":

@@ -333,7 +333,19 @@ class Ouija:
 
     def open(self, swcaffe: str | None = None) -> None:
         """Open the subreddit to new submission"""
-        self.subreddit.mod.update(type="public")
+
+        def open_automoderator():
+            automoderator = self.subreddit.wiki["config/automoderator"]
+            wiki_md = automoderator.content_md.split("\n")
+            linen = [i for i, line in enumerate(wiki_md) if "DummyUtente9510" in line]
+            if linen:
+                line_n = linen[0] - 1
+                wiki_md[line_n] = wiki_md[line_n].replace("~name:", "name:")
+                automoderator.edit(content="\n".join(wiki_md), reason="Apertura")
+            else:
+                self.subreddit.message("ERRORE Apertura!!!", "Automod non gestito")
+
+        open_automoderator()
         LOGGER.info("Subreddit aperto! https://www.reddit.com/r/%s", self.subreddit.display_name)
         for submission in self.subreddit.hot():
             if submission.author == self.me and submission.distinguished:
@@ -360,8 +372,20 @@ class Ouija:
 
     def close(self) -> None:
         """Close the subreddit to new submission"""
-        self.subreddit.mod.update(type="restricted")
         LOGGER.info("Subreddit chiuso")
+
+        def close_automoderator():
+            automoderator = self.subreddit.wiki["config/automoderator"]
+            wiki_md = automoderator.content_md.split("\n")
+            linen = [i for i, line in enumerate(wiki_md) if "DummyUtente9510" in line]
+            if linen:
+                line_n = linen[0] - 1
+                wiki_md[line_n] = wiki_md[line_n].replace(" name:", " ~name:")
+                automoderator.edit(content="\n".join(wiki_md), reason="Chiusura")
+            else:
+                self.subreddit.message("ERRORE Chiusura!!!", "Automod non gestito")
+
+        close_automoderator()
         next_day = time.localtime(time.time() + WAIT_NEXT)
         title = PROSSIMA_TITOLO + str(next_day.tm_mday) + " "
         title = title + MESI[next_day.tm_mon]

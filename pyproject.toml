@@ -1,6 +1,31 @@
+[project]
+name = "feeds3"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["grapheme==0.6.0", "praw==7.7.0", "jinja2==3.1.4"]
+
+
 [tool.ruff]
 # Enable Pyflakes `E` and `F` codes by default.
-select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "EM102", "EM103", "ISC", "G", "PIE", "PYI", "TCH", "PLE", "PLW"]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "N",
+    "UP",
+    "B",
+    "C4",
+    "ISC",
+    "G",
+    "PIE",
+    "PYI",
+    "TCH",
+    "PLE",
+    "PLW",
+]
 ignore = []
 line-length = 100
 show-source = true

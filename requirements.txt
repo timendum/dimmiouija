@@ -1,3 +1,0 @@
-grapheme==0.6.0
-praw==7.7.0
-Jinja2==3.1.4

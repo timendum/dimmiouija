@@ -1,4 +1,5 @@
 """Clear pmlist"""
+
 # pylint: disable=C0103
 import logging
 import sys
@@ -33,8 +34,8 @@ class Cleaner:
         comments = list(rsubreddit.comments(limit=None))
         LOGGER.info("Retrieved %d comments", len(comments))
         comments = [comment for comment in comments if comment.created >= time_limit]
-        LOGGER.info("Valid (%d days) comments: %d", (MAX_AGE/60/60/24, len(comments)))
-        self.authors = set([comment.author.name for comment in comments if comment.author])
+        LOGGER.info("Valid (%d days) comments: %d", MAX_AGE / 60 / 60 / 24, len(comments))
+        self.authors = {comment.author.name for comment in comments if comment.author}
         LOGGER.info("Found %d authors", len(self.authors))
 
     def start(self) -> None:
@@ -51,8 +52,8 @@ class Cleaner:
                 saved_users.append(user)
             else:
                 removed_users.append(user)
-        LOGGER.info("Saved: %s", ', '.join(saved_users))
-        LOGGER.info("Removed: %s", ', '.join(removed_users))
+        LOGGER.info("Saved: %s", ", ".join(saved_users))
+        LOGGER.info("Removed: %s", ", ".join(removed_users))
         self.wiki_main.edit("\n\n".join(saved_users), reason="Clean up")
 
 

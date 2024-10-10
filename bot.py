@@ -1,4 +1,5 @@
 """Manage a subreddit like AskOuija"""
+
 # pylint: disable=C0103
 import argparse
 import logging
@@ -66,7 +67,7 @@ Gli spiriti dicono:
 [Commenta qui]({permalink}?context=100)"""  # noqa
 TEXT_WIKI_CAFFE = (
     "Oggi è aperto /r/DimmiOuija, dove si possono fare domande "
-    + "e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
+    "e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
 )
 TIME_LIMIT = 24 * 60 * 60 * 1000
 YESTERDAY = time.time() - TIME_LIMIT
@@ -187,9 +188,7 @@ class OuijaPost:
 
     def permalink(self, comment: "praw.reddit.models.Comment") -> str:
         """Produce a shorter permalink"""
-        return "https://www.reddit.com/r/{}/comments/{}//{}".format(
-            self._post.subreddit.display_name, self._post.id, comment.id
-        )
+        return f"https://www.reddit.com/r/{self._post.subreddit.display_name}/comments/{self._post.id}//{comment.id}"
 
     def browse_comments(self, parent: "praw.reddit.models.Comment") -> bool:  # noqa: C901
         """Given a comment return True if an answer is found"""

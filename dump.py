@@ -1,4 +1,5 @@
 """Summarize a brief period of DimmiOuija activity"""
+
 import datetime
 import json
 import re

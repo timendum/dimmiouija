@@ -1,4 +1,5 @@
 """Ruota"""
+
 import argparse
 import logging
 import re
@@ -284,7 +285,7 @@ class Ouija:
         title = "Ruota della fortuna - " + self._title_count()
         text = f"""Indovina la frase:
 
-{re.sub(r"[" + LETTERS +"]", "–", self.solution, flags=re.I)}
+{re.sub(r"[" + LETTERS + "]", "–", self.solution, flags=re.I)}
 
 Lettere non presenti:
 

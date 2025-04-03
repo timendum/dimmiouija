@@ -69,9 +69,9 @@ TEXT_WIKI_CAFFE = (
     "Oggi è aperto /r/DimmiOuija, dove si possono fare domande "
     "e ricevere risposte, una lettera alla volta. Partecipazione aperta a tutti."
 )
-TIME_LIMIT = 24 * 60 * 60 * 1000
-YESTERDAY = time.time() - TIME_LIMIT
-OLD = time.time() - (TIME_LIMIT / 2)
+TIME_LIMIT = 14 * 24 * 60 * 60
+PREVIOUS = time.time() - TIME_LIMIT
+NOW = time.time()
 
 LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.NullHandler())
@@ -102,12 +102,12 @@ class OuijaPost:
         return self._post.link_flair_css_class == UNANSWERED["css_class"]
 
     def is_fresh(self) -> bool:
-        """Check if the submission is younger then YESTERDAY"""
-        return self._post.created_utc > YESTERDAY
+        """Check if the submission is younger then PREVIOUS"""
+        return self._post.created_utc > PREVIOUS
 
-    def is_old(self) -> bool:
-        """Check if the submission waited too much for an answer"""
-        return self._post.created_utc > OLD
+    def calc_score(self) -> int:
+        """Return a int between 1 and SCORE_LIMIT based on the age of the post."""
+        return round(SCORE_LIMIT * (1 - (NOW - self._post.created_utc) / (26 * 60 * 60)))
 
     def change_flair(self) -> None:
         """Flair the post based on answer_text and send a PM"""
@@ -320,8 +320,9 @@ class Ouija:
                 if answer:
                     # check if the answer score is under the limit
                     # but not if post is old and the answer score is above lower limit
-                    if post.answer_score < SCORE_LIMIT and not (
-                        post.is_old() and post.answer_score >= SCORE_LIMIT - 1
+                    if (
+                        post.answer_score < SCORE_LIMIT
+                        and not post.calc_score() >= post.answer_score
                     ):
                         # revert accept_answer
                         post.answer_text = None

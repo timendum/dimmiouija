@@ -1,4 +1,5 @@
-"""Randomize the list of comments in a solution. """
+"""Randomize the list of comments in a solution."""
+
 import random
 import re
 import sys

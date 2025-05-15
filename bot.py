@@ -320,10 +320,7 @@ class Ouija:
                 if answer:
                     # check if the answer score is under the limit
                     # but not if post is old and the answer score is above lower limit
-                    if (
-                        post.answer_score < SCORE_LIMIT
-                        and not post.calc_score() >= post.answer_score
-                    ):
+                    if post.answer_score < SCORE_LIMIT and post.answer_score < post.calc_score():
                         # revert accept_answer
                         post.answer_text = None
                         post.answer_score = float("-inf")

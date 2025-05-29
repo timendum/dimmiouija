@@ -107,7 +107,8 @@ class OuijaPost:
 
     def calc_score(self) -> int:
         """Return a int between 1 and SCORE_LIMIT based on the age of the post."""
-        return round(SCORE_LIMIT + 2 * (1 - (NOW - self._post.created_utc) / (26 * 60 * 60)))
+        age = (NOW - self._post.created_utc) / (60 * 60)  # in hours
+        return round(SCORE_LIMIT + 2 * (1 - age / 8))
 
     def change_flair(self) -> None:
         """Flair the post based on answer_text and send a PM"""

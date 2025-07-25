@@ -262,6 +262,7 @@ class PMList:
         self.reddit = reddit
         self.wiki_main = subreddit.wiki["pmlist"]
         self.wiki_todo = subreddit.wiki["pmlist_todo"]
+        self.subreddit = subreddit
 
     def start(self):
         """Prepare for a new start"""
@@ -277,11 +278,11 @@ class PMList:
         user, users = users[0], users[1:]
         self.wiki_todo.edit(content="\n\n".join(users), reason="Done " + user)
         try:
-            self.reddit.redditor(user).message(subject=APERTURA_TITOLO, message=APERTURA_COMMENTO)
+            self.modmail.create(recipient=user, subject=APERTURA_TITOLO, body=APERTURA_COMMENTO)
         except praw.exceptions.APIException as e:
             for subexception in e.items:
                 if subexception.error_type == "USER_DOESNT_EXIST":
-                    self.wiki_main.subreddit.message(user, "User not found")
+                    self.subreddit.message(user, "User not found")
                     break
             else:
                 print(user, e)

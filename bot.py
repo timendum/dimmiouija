@@ -30,7 +30,7 @@ MODPOST = {
     "flair_template_id": "4341ba2c-8c01-11e7-93f7-0e091235c204",
 }
 MESI = [
-    None,
+    "None",
     "gennaio",
     "febbraio",
     "marzo",
@@ -84,14 +84,14 @@ class OuijaPost:
     def __init__(self, post: "praw.reddit.models.Submission") -> None:
         """Initialize."""
         self._post = post
-        self.author = None  # type: "praw.reddit.models.Redditor | None"
+        self.author: praw.reddit.models.Redditor | None = None
         if post.author:
             self.author = post.author.name
         self.question = post.title
-        self.answer_text = None  # type: str | None
-        self.answer_permalink = None  # type: str | None
+        self.answer_text: str | None = None
+        self.answer_permalink: str | None = None
         self.answer_score = float("-inf")
-        self.flair = None  # type: str | None
+        self.flair: str | None = None
         if post.link_flair_text and post.link_flair_text != UNANSWERED["text"]:
             self.flair = post.link_flair_text
 
@@ -187,11 +187,15 @@ class OuijaPost:
             return True
         return False
 
-    def permalink(self, comment: "praw.reddit.models.Comment") -> str:
+    def permalink(
+        self, comment: "praw.reddit.models.Comment | praw.reddit.models.Submission"
+    ) -> str:
         """Produce a shorter permalink"""
         return f"https://www.reddit.com/r/{self._post.subreddit.display_name}/comments/{self._post.id}//{comment.id}"
 
-    def browse_comments(self, parent: "praw.reddit.models.Comment") -> bool:  # noqa: C901
+    def browse_comments(
+        self, parent: "praw.reddit.models.Comment | praw.reddit.models.Submission"
+    ) -> bool:  # noqa: C901
         """Given a comment return True if an answer is found"""
         found = False
         existing = {}  # type: dict[str, praw.reddit.models.Comment]
@@ -213,7 +217,7 @@ class OuijaPost:
             if self.moderation(comment, parent):
                 continue
             # check body (remove space and escape chars)
-            body = comment.body.strip().lstrip("\\")
+            body: str = comment.body.strip().lstrip("\\")
             if GOODBYE.match(body):
                 if existing.get("GOODBYE"):
                     if (
@@ -278,8 +282,10 @@ class PMList:
         user, users = users[0], users[1:]
         self.wiki_todo.edit(content="\n\n".join(users), reason="Done " + user)
         try:
-            self.modmail.create(recipient=user, subject=APERTURA_TITOLO, body=APERTURA_COMMENTO)
-        except praw.exceptions.APIException as e:
+            self.subreddit.modmail.create(
+                recipient=user, subject=APERTURA_TITOLO, body=APERTURA_COMMENTO
+            )
+        except praw.exceptions.RedditAPIException as e:
             for subexception in e.items:
                 if subexception.error_type == "USER_DOESNT_EXIST":
                     self.subreddit.message(user, "User not found")

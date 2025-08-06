@@ -282,10 +282,11 @@ class PMList:
         user, users = users[0], users[1:]
         self.wiki_todo.edit(content="\n\n".join(users), reason="Done " + user)
         try:
-            modconv = self.subreddit.modmail.create(
+            modconv: praw.reddit.models.ModmailConversation = self.subreddit.modmail.create(
                 recipient=user, subject=APERTURA_TITOLO, body=APERTURA_COMMENTO
             )
-            modconv.archive()
+            if not modconv.is_internal:
+                modconv.archive()
         except praw.exceptions.RedditAPIException as e:
             for subexception in e.items:
                 if subexception.error_type == "USER_DOESNT_EXIST":

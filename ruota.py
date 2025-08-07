@@ -4,6 +4,7 @@ import argparse
 import logging
 import re
 import time
+import unicodedata
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -13,6 +14,7 @@ MAX_LETTERS = 1  #   max attempts in DELTA_LETTERS hours
 MAX_ANSWERS = 2  #   max attempts in DELTA_ANSWERS hours
 DELTA_LETTERS = 1  # after how many hours we reset the number of attempts for LETTERS
 DELTA_ANSWERS = 2  # after how many hours we reset the number of attempts for ANSWERS
+DELTA_ACTIVE = 30  # after how many MINUTES we thing the post is inactive and accept answers
 
 UNANSWERED = {
     "text": "Ruota della fortuna",
@@ -32,7 +34,7 @@ LOGGER = logging.getLogger(__file__)
 LOGGER.addHandler(logging.NullHandler())
 LOGGER.setLevel(logging.ERROR)
 
-LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZÀÈÉÌÒÙ"
+LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 LETTER_MAX = """Ciao,
 devi aspettare di più per poter chiedere un'altra lettera.
@@ -62,6 +64,22 @@ purtroppo il tuo commento non è la frase da indovinare.
 """  # noqa
 
 
+def normalize_str(s):
+    # Normalize accents (e.g., é → e)
+    s = unicodedata.normalize("NFD", s)
+    # Removing diacritical marks (accents) from characters. 'Mn' → Nonspacing Mark.
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    # Convert to uppercase
+    return s.upper()
+
+
+def relaxed_equal(str1: str, str2: str) -> bool:
+    # Remove all non-letter characters (keep only a-zA-Z)
+    str1 = re.sub(r"[^A-Za-z]", "", str1)
+    str2 = re.sub(r"[^A-Za-z]", "", str2)
+    return normalize_str(str1) == normalize_str(str2)
+
+
 class OuijaPost:
     """A post in ouija"""
 
@@ -69,31 +87,39 @@ class OuijaPost:
         """Initialize."""
         self._post = post
         self.solution = solution
-        self.uletters = defaultdict(int)  # type: dict[str, int]
-        self.uanswers = defaultdict(int)  # type: dict[str, int]
+        self.norm_solution = "".join(normalize_str(s) for s in solution)
         if not self._post.link_flair_text:
             return
         if (
             self._post.link_flair_text != UNANSWERED["text"]
-            and self._post.link_flair_text != ANSWERED["text"]
+            # and self._post.link_flair_text != ANSWERED["text"]
         ):
+            # Nothing to do here, not Ruota or already solved.
             return
-        self.current = post.selftext.strip().split("\n")[2]
-        if self._post.link_flair_text != UNANSWERED["text"]:
-            return
-        self.missing = set(
+        self.current_revealed: str = post.selftext.strip().split("\n")[2]
+        self.known_missing = set(
             post.selftext.strip().split("\n")[4].split(":")[1].strip().replace(" ", "")
         )
         now = datetime.now()
         self._latest_letter = (now - timedelta(hours=DELTA_LETTERS)).timestamp()
+        """Time sooner than this is valid based on DELTA_LETTERS"""
         self._latest_answer = (now - timedelta(hours=DELTA_ANSWERS)).timestamp()
+        """Time sooner than this is valid based on DELTA_ANSWERS"""
+        self._latest_active = (now - timedelta(minutes=DELTA_ACTIVE)).timestamp()
+        """Time sooner than this means the post is still active, based on DELTA_ACTIVE"""
+        self.uletters: dict[str, int] = defaultdict(int)
+        """User -> number of letters in DELTA_LETTERS hours"""
+        self.uanswers: dict[str, int] = defaultdict(int)
+        """User -> number of answers in DELTA_LETTERS hours"""
+        self._last_answered: float = post.created_utc
+        """Time of the latest comment processed"""
         LOGGER.debug("Post: %s", post.permalink)
-        LOGGER.debug("Current: %s", self.current)
+        LOGGER.debug("Current: %s", self.current_revealed)
         LOGGER.debug("Target : %s", self.solution)
-        if len(self.solution) != len(self.current):
-            e = f"Wrong solution: {self.solution} vs {self.current}"
+        if len(self.solution) != len(self.current_revealed):
+            e = f"Wrong solution: {self.solution} vs {self.current_revealed}"
             raise ValueError(e)
-        LOGGER.debug("Missing: %s", self.missing)
+        LOGGER.debug("Known missing: %s", self.known_missing)
 
     def is_unanswered(self) -> bool:
         """Check if the submission is Unanswered"""
@@ -111,11 +137,12 @@ class OuijaPost:
         """Return False or the username in the reply from the bot"""
         for r in comment.replies:
             if r.author != self._post.author:
+                # Reply not from bot
                 continue
             if r.removed:
                 continue
             try:
-                return re.search(r"u/([A-Za-z0-9_-]+)", r.body)[1]
+                return re.search(r"u/([A-Za-z0-9_-]+)", r.body)[1]  # type: ignore (in try/except)
             except TypeError:
                 return True
         return False
@@ -133,6 +160,7 @@ class OuijaPost:
         rauthor = self.already_replied(comment)
         if rauthor and rauthor is not True:
             # comment already handled
+            self._last_answered = max(self._last_answered, comment.created_utc)
             if comment.created_utc >= self._latest_letter:
                 # it's newer than DELTA_LETTERS
                 # so we are going to count it
@@ -148,6 +176,7 @@ class OuijaPost:
         rauthor = self.already_replied(comment)
         if rauthor and rauthor is not True:
             # comment already handled
+            self._last_answered = max(self._last_answered, comment.created_utc)
             if comment.created_utc >= self._latest_answer:
                 # it's newer than DELTA_LETTERS
                 # so we are going to count it
@@ -161,13 +190,16 @@ class OuijaPost:
     def _handle_answer(self, comment: "praw.reddit.models.Comment") -> bool:
         """Return True if it's a the correct answer"""
         author = comment.author.name
-        if self.uanswers[author] >= MAX_ANSWERS:
+        if self.uanswers[author] >= MAX_ANSWERS and (
+            ## Check if the post inactive and user is not too much over the limit
+            self._last_answered >= self._latest_active and self.uanswers[author] <= MAX_ANSWERS + 1
+        ):
             self._reply(comment, True, ANSWER_MAX)
             return False
         self.uanswers[author] = 1 + self.uanswers[author]
-        body = comment.body.strip().upper()
-        if re.sub(r"\W+", "", body) == re.sub(r"\W+", "", self.solution):
-            ncurrent = len(set(re.sub(r"\W+", "", self.solution)) - {"- "})
+        body = comment.body
+        if relaxed_equal(body, self.solution):
+            ncurrent = len(set(normalize_str(self.current_revealed)) - {"- "})
             self._reply(comment, False, ANSWER_OK, ncurrent=ncurrent)
             self._post.mod.sticky(state=False)
             return True
@@ -180,7 +212,10 @@ class OuijaPost:
     ) -> bool:
         # Handle new letter
         author = comment.author.name
-        if self.uletters[author] >= MAX_LETTERS:
+        if self.uletters[author] >= MAX_LETTERS and (
+            ## Check if the post inactive and user is not too much over the limit
+            self._last_answered >= self._latest_active and self.uletters[author] <= MAX_LETTERS + 1
+        ):
             self._reply(comment, True, LETTER_MAX)
             return False
         body = comment.body.strip().upper()
@@ -188,14 +223,14 @@ class OuijaPost:
             self._reply(comment, True, LETTER_INVALID)
             return False
         self.uletters[author] = 1 + self.uletters[author]
-        if body in self.solution:
+        if body in self.norm_solution:
             self._reply(comment, False, LETTER_OK)
-            if body not in self.current and body not in to_reveal:
+            if body not in self.current_revealed and body not in to_reveal:
                 to_reveal.add(body)
             return True
         else:
             self._reply(comment, False, LETTER_NO)
-            if body not in self.missing:
+            if body not in self.known_missing:
                 new_missing.add(body)
         return False
 
@@ -227,8 +262,8 @@ class OuijaPost:
                 self._reveal_selftext(comment.author.name)
                 return True
         # now check new letters
-        to_reveal = set()  # type: set[str]
-        new_missing = set()  # type: set[str]
+        to_reveal: set[str] = set()
+        new_missing: set[str] = set()
         for comment in new_letters:
             self._handle_letter(comment, to_reveal, new_missing)
         self._update_selftext(to_reveal, new_missing)
@@ -239,17 +274,18 @@ class OuijaPost:
             return False
         LOGGER.debug("Updating text with: %s and %s", to_reveal, new_missing)
         new_current = "".join(
-            [c if c in to_reveal else self.current[i] for i, c in enumerate(self.solution)]
+            c if normalize_str(c) in to_reveal else self.current_revealed[i]
+            for i, c in enumerate(self.solution)
         )
         new_text = self._post.selftext.strip().split("\n")
         new_text[2] = new_current
-        self.missing = self.missing.union(new_missing)
-        new_text[4] = new_text[4].split(":")[0] + ": " + " ".join(sorted(self.missing))
+        self.known_missing = self.known_missing.union(new_missing)
+        new_text[4] = new_text[4].split(":")[0] + ": " + " ".join(sorted(self.known_missing))
         self._post.edit(body="\n".join(new_text))
         return True
 
     def _reveal_selftext(self, username) -> bool:
-        LOGGER.debug("Revealing solution with: %s ", username)
+        LOGGER.debug("Revealing solution, found by: %s ", username)
         new_text = self._post.selftext.strip().split("\n")
         new_text[2] = "Soluzione: " + self.solution
         new_text[4] = "Ha indovinato la frase: u/" + username
@@ -270,7 +306,7 @@ class Ouija:
         self._reddit = reddit
         self.me = reddit.user.me()
         self.subreddit = reddit.subreddit(subreddit)
-        self.solution = self.subreddit.wiki["rdellaf"].content_md.upper()
+        self.solution = self.subreddit.wiki["rdellaf"].content_md.strip().upper()
 
     def _title_count(self) -> str:
         return " ".join(
@@ -283,9 +319,10 @@ class Ouija:
 
     def open(self) -> None:
         title = "Ruota della fortuna - " + self._title_count()
+        clue = "".join("-" if normalize_str(c) in LETTERS else c for c in self.solution)
         text = f"""Indovina la frase:
 
-{re.sub(r"[" + LETTERS + "]", "–", self.solution, flags=re.I)}
+{clue}
 
 Lettere non presenti:
 
@@ -293,15 +330,18 @@ Lettere non presenti:
 
 Il gioco prevede due azioni:
 
-- Puoi commentare con una lettera, in questo caso se il carattere è presente,
+- Puoi commentare con una lettera tra A e Z,
+in questo caso se il carattere è presente,
 verrà rivelato all'interno della frase.
 - Puoi commentre con una frase (cioè con più di un carattere),
-se quello che hai scritto corrisponde alla frase da indovinare, avrai vinto il gioco
+se quello che hai scritto corrisponde alla frase da indovinare,
+avrai vinto il gioco.
 
 Ogni giocatore può:
 
 - tentare con UNA lettera ogni ora.
 - tentare con DUE frasi ogni DUE ore.
+- fare un tentativo in più se non ci sono stati commenti negli ultimi {DELTA_ACTIVE} minuti
 
 """
         submission = self.subreddit.submit(title, selftext=text)
@@ -326,7 +366,7 @@ Ogni giocatore può:
             if submission.link_flair_text == ANSWERED["text"]:
                 try:
                     post = OuijaPost(submission, self.solution)
-                    if self.solution in post.current:
+                    if self.solution in post.current_revealed:
                         LOGGER.debug("Found solved %s", post)
                         return True
                 except ValueError:

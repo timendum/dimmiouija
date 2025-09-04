@@ -131,14 +131,15 @@ class OuijaPost:
                 )
                 if self._post.author:
                     try:
-                        self._post.author.message(
-                            subject=PM_ANSWER_TITLE,
-                            message=PM_ANSWER_BODY.format(
+                        modconv: praw.reddit.models.ModmailConversation = self.subreddit.modmail.create(
+                            recipient=self._post.author, subject=PM_ANSWER_TITLE, body=PM_ANSWER_BODY.format(
                                 question=self._post.title,
                                 answer=self.answer_text,
                                 permalink=self.answer_permalink,
-                            ),
+                            )
                         )
+                        if not modconv.is_internal:
+                            modconv.archive()
                     except praw.exceptions.RedditAPIException:
                         LOGGER.exception("Error sending PM to %s", self._post.author.name)
                 LOGGER.debug("Flair - %s - https://www.reddit.com%s", text, self._post.permalink)

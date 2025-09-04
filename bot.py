@@ -131,11 +131,15 @@ class OuijaPost:
                 )
                 if self._post.author:
                     try:
-                        modconv: praw.reddit.models.ModmailConversation = self.subreddit.modmail.create(
-                            recipient=self._post.author, subject=PM_ANSWER_TITLE, body=PM_ANSWER_BODY.format(
-                                question=self._post.title,
-                                answer=self.answer_text,
-                                permalink=self.answer_permalink,
+                        modconv: praw.reddit.models.ModmailConversation = (
+                            self.subreddit.modmail.create(
+                                recipient=self._post.author,
+                                subject=PM_ANSWER_TITLE,
+                                body=PM_ANSWER_BODY.format(
+                                    question=self._post.title,
+                                    answer=self.answer_text,
+                                    permalink=self.answer_permalink,
+                                ),
                             )
                         )
                         if not modconv.is_internal:

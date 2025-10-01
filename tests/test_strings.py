@@ -51,11 +51,13 @@ class TestNormalizeStr(unittest.TestCase):
         )
         self.assertEqual(
             len(
-                "Molti grandi uomini erano ancora attivi a novant'anni! E sapete perché erano rimasti giovani? Perché avevano ancora dei sogni da realizzare!"
+                "Molti grandi uomini erano ancora attivi a novant'anni! E sapete perché erano"
+                " rimasti giovani? Perché avevano ancora dei sogni da realizzare!"
             ),
             len(
                 normalize_str(
-                    "Molti grandi uomini erano ancora attivi a novant'anni! E sapete perché erano rimasti giovani? Perché avevano ancora dei sogni da realizzare!"
+                    "Molti grandi uomini erano ancora attivi a novant'anni! E sapete perché erano"
+                    " rimasti giovani? Perché avevano ancora dei sogni da realizzare!"
                 )
             ),
         )

@@ -132,7 +132,7 @@ class OuijaPost:
                 if self._post.author:
                     try:
                         modconv: praw.reddit.models.ModmailConversation = (
-                            self.subreddit.modmail.create(
+                            self._post.subreddit.modmail.create(
                                 recipient=self._post.author,
                                 subject=PM_ANSWER_TITLE,
                                 body=PM_ANSWER_BODY.format(

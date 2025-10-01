@@ -281,6 +281,7 @@ class PMList:
         """Send a new PM"""
         users = self.wiki_todo.content_md.split("\n")
         users = [user.strip() for user in users]
+        users = [user.replace("\\", "") for user in users]
         users = [user for user in users if user]
         if not users:
             return

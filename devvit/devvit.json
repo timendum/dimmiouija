@@ -1,0 +1,99 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "dimmiouija-test",
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "permissions": {
+    "reddit": {
+      "enable": true,
+      "scope": "moderator"
+    },
+    "redis": true
+  },
+  "scheduler": {
+    "tasks": {
+      "check": {
+        "endpoint": "/internal/scheduler/check",
+        "cron": "*/2 * * * *"
+      }
+    }
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "DimmiOuija: controlla ora",
+        "description": "Esegue subito il controllo dei post senza risposta",
+        "forUserType": "moderator",
+        "location": "subreddit",
+        "endpoint": "/internal/menu/check"
+      },
+      {
+        "label": "DimmiOuija: apri",
+        "description": "Riapre il subreddit alle nuove domande",
+        "forUserType": "moderator",
+        "location": "subreddit",
+        "endpoint": "/internal/menu/open"
+      },
+      {
+        "label": "DimmiOuija: chiudi",
+        "description": "Chiude il subreddit alle nuove domande",
+        "forUserType": "moderator",
+        "location": "subreddit",
+        "endpoint": "/internal/menu/close"
+      }
+    ]
+  },
+  "forms": {
+    "openForm": "/internal/form/open",
+    "closeForm": "/internal/form/close"
+  },
+  "settings": {
+    "subreddit": {
+      "dryRun": {
+        "type": "boolean",
+        "label": "Modalità prova (non modifica nulla)",
+        "helpText": "Se attiva, il bot scrive nei log cosa farebbe senza rimuovere commenti, cambiare flair, inviare messaggi o modificare wiki e post.",
+        "defaultValue": true
+      },
+      "caffeSubreddit": {
+        "type": "string",
+        "label": "Subreddit con la wiki ambrogio_caffe",
+        "helpText": "All'apertura viene aggiunto un avviso alla pagina wiki ambrogio_caffe di questo subreddit. Lascia vuoto per disattivare.",
+        "defaultValue": "italy"
+      },
+      "legacyBotUsername": {
+        "type": "string",
+        "label": "Username del vecchio bot (opzionale)",
+        "helpText": "Account del bot PRAW. I suoi post vengono trattati come post del bot, così la prima apertura trova il post di chiusura creato dal vecchio bot.",
+        "defaultValue": ""
+      },
+      "flairUnansweredId": {
+        "type": "string",
+        "label": "ID template flair \"Senza risposta\" (opzionale)",
+        "helpText": "Vuoto = c08164be-2cf7-11e8-82fd-0e9dcb216a98, il template di r/DimmiOuija. Da impostare nei subreddit di test.",
+        "defaultValue": ""
+      },
+      "flairAnsweredId": {
+        "type": "string",
+        "label": "ID template flair \"Ouija dice\" (opzionale)",
+        "helpText": "Vuoto = 456a526e-8c01-11e7-bb65-0ed09cec4484, il template di r/DimmiOuija. Il template deve permettere di modificare il testo.",
+        "defaultValue": ""
+      },
+      "flairModpostId": {
+        "type": "string",
+        "label": "ID template flair dei post dei mod (opzionale)",
+        "helpText": "Vuoto = 4341ba2c-8c01-11e7-93f7-0e091235c204, il template di r/DimmiOuija.",
+        "defaultValue": ""
+      }
+    }
+  },
+  "dev": {
+    "subreddit": "DimmiOuijaTest"
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  }
+}

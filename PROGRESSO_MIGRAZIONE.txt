@@ -1,0 +1,132 @@
+PROGRESSO MIGRAZIONE DIMMIOUIJA -> REDDIT DEVELOPER PLATFORM (DEVVIT WEB)
+Aggiornato al: 27 ottobre 2026
+Branch: platform-migration (NIENTE commit ancora: tutto nel working tree)
+
+========================================================================
+1. COSA E' STATO FATTO
+========================================================================
+
+Codice
+- Nuova app Devvit Web in devvit/ (TypeScript, @devvit/web 0.15.1, Hono).
+  Il bot Python (bot.py) resta invariato come riferimento.
+- devvit/README.md: architettura, mapping PRAW -> Devvit, differenze volute,
+  cose non migrate, checklist di playtest (sezione "Come testare").
+- README.md principale: aggiunto rimando a devvit/.
+- .github/workflows/python-app.yml: aggiunto job "devvit" (type-check, test, build con Node 24).
+
+Verifiche superate
+- npm run type-check: OK
+- npm test: 40 test passati
+- npm run build: OK (dist/server/index.cjs)
+- devvit.json valido rispetto allo schema ufficiale
+- Test differenziale: bot.py originale vs port su 3000 alberi di commenti casuali
+  -> 0 differenze (stesse rimozioni, risposte, punteggi)
+
+Passi utente completati
+- [x] Node.js 24 installato (v24.22.1)
+- [x] Registrazione su developers.reddit.com/app-registration (fatta da un aiutante)
+- [x] npm install
+- [x] Login CLI Devvit: u/Fintaman (account proprietario dell'app Devvit)
+- [x] Subreddit di test: r/DimmiOuijaTest (impostato in devvit.json -> dev.subreddit)
+- [x] Flair: spiegato come crearli (vedi sezione 3)
+- [x] Wiki pmlist / pmlist_todo: create in r/DimmiOuijaTest (pmlist_todo con un solo "\")
+- [x] App "dimmiouija-test" creata (devvit init --force), playtest avviato con npm run dev
+- [x] Playtest in modalita' prova: i nuovi post ricevono [DRY RUN] flair "Senza risposta"
+      (si ripete ogni 2 minuti finche' la modalita' prova e' attiva: normale)
+- [x] Fix: se manca una pagina wiki della pmlist il controllo dei post non fallisce piu'
+
+========================================================================
+2. DOVE CI SIAMO FERMATI: AUTOMODERATOR
+========================================================================
+
+Problema: in r/DimmiOuijaTest non si riesce a salvare config/automoderator
+(https://old.reddit.com/r/DimmiOuijaTest/wiki/edit/config/automoderator).
+Errori visti:
+- "YAML parsing error in section 1: mapping values are not allowed here ... line 2, column 9: author:"
+  (probabilmente spazi aggiunti copiando dal terminale)
+- "Unsupported field: `action` in rule" -> compare ANCHE con una regola minima:
+      type: submission
+      title: [qwertyuiop]
+      action: remove
+  e anche copiando da un file ASCII pulito. Causa sconosciuta.
+
+In attesa di: la regola automod VERA di r/DimmiOuija (quella con DummyUtente9510).
+Il bot appartiene a un terzo utente, che deve passarla.
+Pagina: https://old.reddit.com/r/DimmiOuija/wiki/config/automoderator
+
+Quando arriva la regola:
+1. Incollarla a Claude per verificare che il bot (open/close) modifichi la riga giusta
+   e usarla nei test automatici (devvit/src/server/bot.test.ts, AUTOMOD_CLOSED).
+2. Provare a salvarla in r/DimmiOuijaTest (anche dalla nuova interfaccia:
+   https://www.reddit.com/mod/DimmiOuijaTest/automod).
+
+Logica del bot (identica a bot.py):
+- cerca la PRIMA riga che contiene "DummyUtente9510" e modifica la riga PRECEDENTE
+- chiudi: " name:" -> " ~name:"      apri: "~name:" -> "name:"
+- se il marcatore non c'e' (o e' alla prima riga): modmail ai mod
+  "ERRORE Apertura!!!" / "ERRORE Chiusura!!!" - "Automod non gestito"
+
+Ripiego se il sub di test continua a rifiutare qualsiasi regola
+(solo commenti, sempre accettati; il bot li modifica comunque):
+    # Regola di test per DimmiOuija
+    #    name: [utente_inesistente_xyz]
+    # DummyUtente9510
+
+Possibili altre strade: chiedere su r/AutoModerator citando l'errore esatto.
+
+========================================================================
+3. PREPARAZIONE r/DimmiOuijaTest (promemoria)
+========================================================================
+
+Flair dei post (old.reddit.com/r/DimmiOuijaTest/about/flair/ -> link flair templates):
+  css class      testo             note
+  unanswered     Senza risposta    il testo deve essere esattamente questo
+  answered       Ouija dice:       attivare "testo modificabile"
+  DimmiOuija     DimmiOuija
+  Copiare i 3 ID dei template -> impostazioni dell'app dopo il primo avvio.
+
+Wiki:
+  pmlist        uno username per riga, senza u/ (es. un tuo secondo account)
+  pmlist_todo   solo "\" (Reddit non accetta pagine vuote; il bot ignora la riga)
+
+Account per i test: 3 (OP che fa la domanda + A e B che si alternano nelle lettere).
+
+========================================================================
+4. PROSSIMI PASSI
+========================================================================
+
+1. Avviare il playtest (puo' partire anche prima di risolvere l'automod):
+       cd D:\dev\dimmiouija\devvit
+       npm run dev
+   Se la CLI dice che il nome "dimmiouija" e' gia' preso -> cambiarlo in devvit.json.
+2. Nelle impostazioni dell'app in r/DimmiOuijaTest:
+   - inserire i 3 ID dei flair
+   - SVUOTARE "Subreddit con la wiki ambrogio_caffe" (default "italy"!)
+   - lasciare attiva la modalita' prova per il primo giro
+3. Seguire la checklist in devvit/README.md ("Come testare", passi 1-13).
+   Log: terminale di npm run dev, oppure  npx devvit logs DimmiOuijaTest
+4. Produzione: deploy, installazione su r/DimmiOuija in modalita' prova
+   (convive col bot Python), confronto log, poi stop del cron Python e
+   disattivazione modalita' prova.
+
+========================================================================
+5. DECISIONI APERTE
+========================================================================
+
+- Il bot PRAW e' di un terzo utente: serve il suo username per l'impostazione
+  "Username del vecchio bot" e per l'eventuale trasferimento dello username
+  all'app Devvit (proprietaria: u/Fintaman; registrazione fatta dall'aiutante).
+  Da chiarire con Reddit: Discord #data-api-app-migration o modmail r/Devvit.
+- Il nome app "dimmiouija" e' gia' registrato (probabilmente dall'aiutante): per i test
+  si usa un'app con altro nome (es. dimmiouija-test) creata da u/Fintaman con
+  "npx devvit init --force". Per la produzione: pubblica l'aiutante con il suo account
+  oppure si chiede a Reddit di trasferire l'app / aggiungere u/Fintaman.
+  Backup dei file prima dell'init: scratchpad\devvit-backup della sessione Claude.
+- Migrare anche ruota.py, dump.py/summary.py, random_comment.py, clear_pmlist.py?
+- Apertura/chiusura automatiche (cron) invece che da menu? Serve il calendario.
+- close(): bot.py calcola la lista domande aperte ma non la pubblica (mantenuto): pubblicarla?
+- Wiki r/italy ambrogio_caffe: l'account dell'app deve poterla modificare (chiedere ai mod di r/italy).
+- Errore "utente inesistente" in pmlist: riconosciuto cercando USER_DOESNT_EXIST nel
+  messaggio d'errore -> da verificare in playtest (passo 12).
+
+Nota: prompt.txt (istruzioni iniziali) e' ancora non tracciato nella root.

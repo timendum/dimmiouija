@@ -3,6 +3,9 @@
 ## Description
 DimmiOuija bot is a reddit bot that manages /r/DimmiOuija subreddit
 
+> **Migrazione in corso:** il bot è stato portato sulla Reddit Developer Platform (Devvit) nella cartella
+> [`devvit/`](devvit/README.md), che contiene anche le istruzioni per testarlo e pubblicarlo.
+
 ## Requirements
 - A python 3.5 or higher capable machine
 - ```praw```
